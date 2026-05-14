@@ -68,36 +68,19 @@
             opacity: 0.5;
         }
 
-        #ascii3d-container {
+        /* p5.js generative background canvas */
+        #p5-canvas {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: 1;
             pointer-events: none;
-            opacity: 0.35;
-            transition: opacity 2s ease;
+            opacity: 0.4;
         }
 
-        #ascii3d-container,
-        #ascii3d-container *,
-        #ascii3d-container table,
-        #ascii3d-container tbody,
-        #ascii3d-container tr,
-        #ascii3d-container td {
-            background: transparent !important;
-            background-color: transparent !important;
-        }
-
-        #ascii3d-container td {
-            color: var(--text-dim);
-            padding: 0 !important;
-            line-height: 1 !important;
-        }
-
-        #ascii3d-container table {
-            margin: 0 auto;
-            border-spacing: 0 !important;
-            border-collapse: collapse !important;
+        #p5-canvas canvas {
+            width: 100% !important;
+            height: 100% !important;
         }
 
         /* ===== MAIN LAYOUT ===== */
@@ -133,6 +116,11 @@
         .top-btn:hover {
             border-color: var(--border-bright);
             color: var(--text);
+        }
+
+        .top-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         /* ===== STORY SCROLL AREA ===== */
@@ -628,6 +616,7 @@
 <div id="scene" class="scene-room"></div>
 <div id="vignette"></div>
 <div id="ascii3d-container"></div>
+<div id="p5-canvas"></div>
 <canvas id="particle-canvas"></canvas>
 
 <!-- Loading -->
@@ -639,6 +628,7 @@
     <div id="top-bar">
         <button class="top-btn" id="log-btn">LOG</button>
         <button class="top-btn" id="stats-btn">STATS</button>
+        <button class="top-btn" id="audio-btn">MUSIC</button>
     </div>
 
     <!-- Scrollable story text -->
@@ -672,99 +662,412 @@
 </div>
 
 <script src="https://unpkg.com/inkjs@2.4.0/dist/ink.js"></script>
+<script src="https://unpkg.com/@strudel/web@1.0.3"></script>
 
+<script>
+// ===== STRUDEL DYNAMIC MUSIC ENGINE =====
+let strudelReady = false;
+let audioPlaying = false;
+let activePattern = null;
+let lastModulation = { entropy: 0, signal: 0, tempo: 0 }; // track last values to avoid re-trigger spam
 
-<script type="module">
-try {
-    const THREE = await import('https://unpkg.com/three@0.163.0/build/three.module.js');
-    const { AsciiEffect } = await import('https://unpkg.com/three@0.163.0/examples/jsm/effects/AsciiEffect.js');
+// Compute modulation parameters from ink game variables
+// Returns adjusted cutoff, gain, and speed based on game state
+function computeModulation(vars) {
+    const entropy = (vars.entropiric_saturation || 40);
+    const signal = (vars.neganthropomorphic_signal || 10);
+    const tempo = (vars.operational_tempo || 10);
+    const fear = (vars.public_fear || 30);
+    const fidelity = (vars.augmentation_fidelity || 50);
+    const awareness = (vars.cosmic_awareness || 0);
 
-    const container = document.getElementById('ascii3d-container');
-    if (!container) throw new Error('no container');
+    // Map variables to audio parameters:
+    // entropiric_saturation -> lower cutoff (darker, more muffled)
+    // neganthropomorphic_signal -> higher reverb (more spacious)
+    // operational_tempo -> faster pattern speed
+    // public_fear -> slight gain increase (tension)
+    // cosmic_awareness -> wider stereo / room size
+    // augmentation_fidelity -> higher cutoff (clearer tone)
 
-    const scene3d = new THREE.Scene();
-    const camera3d = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera3d.position.z = 8;
+    const cutoffBase = 800;
+    const cutoffDelta = (fidelity - 50) * 10 - (entropy - 40) * 5;
+    const cutoff = Math.max(200, Math.min(4000, cutoffBase + cutoffDelta));
 
-    const renderer3d = new THREE.WebGLRenderer();
-    renderer3d.setClearColor(0x000000, 1);
-    const asciiEffect = new AsciiEffect(renderer3d, ' .,:;=+*#%@', { invert: false, resolution: 0.15 });
-    asciiEffect.setSize(window.innerWidth, window.innerHeight);
+    const gainBase = 0.07;
+    const gainDelta = (fear - 30) * 0.0005;
+    const gain = Math.max(0.03, Math.min(0.15, gainBase + gainDelta));
 
-    const el = asciiEffect.domElement;
-    el.style.color = '#c8a060';
-    el.style.backgroundColor = 'transparent';
-    el.style.fontFamily = "'IBM Plex Mono', monospace";
-    el.style.fontSize = '6px';
-    el.style.lineHeight = '1';
-    el.style.letterSpacing = '1px';
-    container.appendChild(el);
+    const roomBase = 0.4;
+    const roomDelta = (signal - 10) * 0.005 + (awareness) * 0.01;
+    const room = Math.max(0.1, Math.min(0.8, roomBase + roomDelta));
 
-    scene3d.add(new THREE.AmbientLight(0xffffff, 0.4));
-    const dl = new THREE.DirectionalLight(0xffffff, 1.2);
-    dl.position.set(5, 5, 5);
-    scene3d.add(dl);
+    const speedDiv = Math.max(1, 5 - Math.floor(tempo / 10)); // higher tempo = smaller slow divisor
 
-    const wm = new THREE.MeshStandardMaterial({ color: 0xc8a060, wireframe: true, transparent: true, opacity: 0.7 });
-    const sm = new THREE.MeshStandardMaterial({ color: 0xc8a060, wireframe: false, transparent: true, opacity: 0.5 });
+    return { cutoff, gain, room, speedDiv, entropy, signal, tempo };
+}
 
-    const m = {};
-    m.room = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.4, 8, 16), wm);
-    m.agent = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 1), wm);
-    m.agent_anomaly = new THREE.Group();
-    m.agent_anomaly.add(new THREE.Mesh(new THREE.OctahedronGeometry(1.8, 0), wm.clone()), new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 6), sm.clone()));
-    m.city = new THREE.Group();
-    for (let i = 0; i < 7; i++) { const h = 0.5+Math.random()*2; const b = new THREE.Mesh(new THREE.BoxGeometry(0.5,h,0.5), wm.clone()); b.position.set(-2+i*0.7, h/2-1, 0); m.city.add(b); }
-    m.temple = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.5, 4), wm.clone());
-    m.network = new THREE.Group();
-    [[0,0,0],[2,1,0],[-2,1,0],[1,-1,1],[-1,-1,-1],[0,2,-1],[1.5,0,-1.5],[-1.5,0,1.5]].forEach(([x,y,z]) => { const n = new THREE.Mesh(new THREE.SphereGeometry(0.2,6,4), sm.clone()); n.position.set(x,y,z); m.network.add(n); });
-    const lm = new THREE.LineBasicMaterial({color:0xc8a060,transparent:true,opacity:0.3});
-    const np = [[0,0,0],[2,1,0],[-2,1,0],[1,-1,1],[-1,-1,-1],[0,2,-1],[1.5,0,-1.5],[-1.5,0,1.5]];
-    for(let i=0;i<np.length;i++)for(let j=i+1;j<np.length;j++){const d=Math.sqrt((np[i][0]-np[j][0])**2+(np[i][1]-np[j][1])**2+(np[i][2]-np[j][2])**2);if(d<3){m.network.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...np[i]),new THREE.Vector3(...np[j])]),lm));}}
-    m.signal = new THREE.Mesh(new THREE.TorusKnotGeometry(1, 0.3, 64, 8, 2, 3), wm.clone());
-    m.crisis = new THREE.Group();
-    for(let i=0;i<8;i++){const f=new THREE.Mesh(new THREE.TetrahedronGeometry(0.4+Math.random()*0.3,0),new THREE.MeshStandardMaterial({color:0xc86050,wireframe:true,transparent:true,opacity:0.6}));const a=(i/8)*Math.PI*2;f.position.set(Math.cos(a)*1.2,Math.sin(a)*1.2,(Math.random()-0.5)*0.5);f.userData={angle:a,radius:1.2,speed:0.5+Math.random()*0.5};m.crisis.add(f);}
-    m.ending = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 0), sm.clone());
+// Scene-specific musical patterns
+// Each scene gets a distinct harmonic/melodic character
+// mod is an optional modulation object from computeModulation()
+const scenePatterns = {
+    room: (mod) => {
+        const cut = mod ? mod.cutoff : 600;
+        const gn = mod ? mod.gain : 0.08;
+        const rm = mod ? mod.room : 0.4;
+        const spd = mod ? mod.speedDiv : 2;
+        return note("<c3 [eb3 g3]>").s("sawtooth")
+            .cutoff(cut).gain(gn).attack(0.3).release(0.8)
+            .slow(spd)
+            .room(rm).delay(0.25);
+    },
 
-    let cur = null, tgt = 'room';
-    const cm = {room:'#c8a060',chat:'#a8b8c8',history:'#c8a060',cosmic:'#b8a8c8',quantum:'#a8b8c8',crisis:'#c86050',ending:'#a0c8a0'};
+    chat: (mod) => {
+        const cut = mod ? Math.min(3000, mod.cutoff * 1.5) : 1200;
+        const gn = mod ? mod.gain * 0.9 : 0.07;
+        const rm = mod ? mod.room : 0.3;
+        const spd = mod ? mod.speedDiv : 1.5;
+        return note("<a3 [c4 e4]>").s("triangle")
+            .cutoff(cut).gain(gn).attack(0.1).release(0.5)
+            .slow(spd)
+            .room(rm)
+            .jux(rev);
+    },
 
-    window.set3dScene = function(name) {
-        if (name === tgt) return;
-        if (cur) scene3d.remove(cur);
-        tgt = name;
-        cur = m[name] || m.room;
-        scene3d.add(cur);
-        el.style.color = cm[name] || '#c8a060';
-    };
-    window.set3dScene('room');
+    history: (mod) => {
+        const cut = mod ? mod.cutoff * 0.8 : 800;
+        const gn = mod ? mod.gain * 0.85 : 0.06;
+        const rm = mod ? Math.min(0.7, mod.room + 0.1) : 0.5;
+        const spd = mod ? Math.max(2, mod.speedDiv) : 3;
+        return note("<d3 [f3 a3]> <bb3 [g3 d4]>").s("sawtooth")
+            .cutoff(cut).gain(gn).attack(0.4).release(1.0)
+            .slow(spd)
+            .room(rm).delay(0.3);
+    },
 
-    const clock = new THREE.Clock();
-    (function loop() {
-        requestAnimationFrame(loop);
-        const t = clock.getElapsedTime();
-        if (cur) {
-            cur.rotation.y = t * 0.3;
-            cur.rotation.x = Math.sin(t * 0.2) * 0.2;
-            if (tgt==='agent_anomaly' && cur.children) { cur.children[0].rotation.y=t*0.5; cur.children[1].rotation.z=t*0.8; const s=1+Math.sin(t*2)*0.1; cur.children[1].scale.set(s,s,s); }
-            else if (tgt==='crisis' && cur.children) { cur.children.forEach(f=>{const a=f.userData.angle+t*f.userData.speed;const r=f.userData.radius+Math.sin(t*3+f.userData.angle)*0.3;f.position.set(Math.cos(a)*r,Math.sin(a)*r,f.position.z);f.rotation.x=t*f.userData.speed*2;}); }
-            else if (tgt==='temple') { cur.rotation.y=t*0.1+Math.PI/4; }
-            else if (tgt==='network') { cur.rotation.y=t*0.15; cur.rotation.x=Math.sin(t*0.1)*0.3; }
+    cosmic: (mod) => {
+        const gn = mod ? mod.gain * 0.85 : 0.06;
+        const rm = mod ? Math.min(0.8, mod.room + 0.15) : 0.6;
+        const spd = mod ? Math.max(3, mod.speedDiv + 1) : 4;
+        return note("<e4 [b3 g4]> <a3 [d4 c5]>").s("sine")
+            .gain(gn).attack(0.5).release(1.2)
+            .slow(spd)
+            .room(rm).delay(0.4)
+            .jux(x => x.rev().add(0.02));
+    },
+
+    quantum: (mod) => {
+        const cut = mod ? Math.min(4000, mod.cutoff * 1.8) : 2000;
+        const gn = mod ? mod.gain * 0.7 : 0.05;
+        const rm = mod ? mod.room : 0.4;
+        const spd = mod ? mod.speedDiv : 2;
+        return note("<f4 [a4 c5]> <eb4 [bb4 g4]>").s("triangle")
+            .cutoff(cut).gain(gn).attack(0.2).release(0.6)
+            .slow(spd)
+            .room(rm)
+            .jux(x => x.fast(1.5));
+    },
+
+    crisis: (mod) => {
+        const cut = mod ? Math.min(800, mod.cutoff * 0.5) : 400;
+        const gn = mod ? Math.min(0.15, mod.gain * 1.5) : 0.1;
+        const rm = mod ? Math.max(0.1, mod.room * 0.5) : 0.2;
+        const spd = mod ? Math.min(2, mod.speedDiv) : 1;
+        return note("<c3 [e3 g3]> <ab2 [b2 eb3]>").s("sawtooth")
+            .cutoff(cut).gain(gn).attack(0.05).release(0.3)
+            .slow(spd)
+            .room(rm).delay(0.1);
+    },
+
+    ending: (mod) => {
+        const gn = mod ? mod.gain * 0.7 : 0.05;
+        const rm = mod ? Math.min(0.85, mod.room + 0.2) : 0.7;
+        return note("<c4 [e4 g4]> <f4 [a4 c5]>").s("sine")
+            .gain(gn).attack(0.6).release(1.5)
+            .slow(5)
+            .room(rm);
+    }
+};
+
+// Initialize Strudel (called on first user click)
+async function initAudio() {
+    if (strudelReady) return true;
+    try {
+        if (typeof initStrudel === 'function') {
+            await initStrudel();
+            strudelReady = true;
+            console.log('Strudel audio initialized');
+            return true;
         }
-        camera3d.position.x = Math.sin(t*0.15)*0.5;
-        camera3d.position.y = Math.cos(t*0.1)*0.3;
-        camera3d.lookAt(0, 0, 0);
-        asciiEffect.render(scene3d, camera3d);
-    })();
+        console.warn('Strudel not loaded');
+        return false;
+    } catch(e) {
+        console.warn('Strudel init failed:', e.message);
+        return false;
+    }
+}
 
-    window.addEventListener('resize', () => {
-        camera3d.aspect = window.innerWidth / window.innerHeight;
-        camera3d.updateProjectionMatrix();
-        renderer3d.setSize(window.innerWidth, window.innerHeight);
-        asciiEffect.setSize(window.innerWidth, window.innerHeight);
+// Start or switch to a scene's pattern
+async function playSceneMusic(sceneName, mod) {
+    if (!strudelReady) {
+        const ok = await initAudio();
+        if (!ok) return;
+    }
+    // Stop current pattern
+    try { hush(); } catch(e) {}
+
+    const patternFn = scenePatterns[sceneName] || scenePatterns.room;
+    try {
+        activePattern = patternFn(mod).play();
+        audioPlaying = true;
+    } catch(e) {
+        console.warn('Strudel play failed:', e.message);
+    }
+}
+
+// Stop all music
+function stopMusic() {
+    try { hush(); } catch(e) {}
+    activePattern = null;
+    audioPlaying = false;
+}
+
+// Called from updateStats — re-triggers pattern if modulation has shifted enough
+function applyGameModulation(vars) {
+    if (!audioPlaying || !strudelReady) return;
+
+    const mod = computeModulation(vars);
+    const scene = window._currentScene || 'room';
+
+    // Only re-trigger if key variables changed significantly (threshold: ~10 pts)
+    const entropyShift = Math.abs(mod.entropy - lastModulation.entropy);
+    const signalShift = Math.abs(mod.signal - lastModulation.signal);
+    const tempoShift = Math.abs(mod.tempo - lastModulation.tempo);
+
+    if (entropyShift > 10 || signalShift > 8 || tempoShift > 5) {
+        lastModulation = { entropy: mod.entropy, signal: mod.signal, tempo: mod.tempo };
+        playSceneMusic(scene, mod);
+    }
+}
+
+// Audio toggle button handler
+document.addEventListener('DOMContentLoaded', () => {
+    const audioBtn = document.getElementById('audio-btn');
+    if (!audioBtn) return;
+
+    audioBtn.addEventListener('click', async () => {
+        if (!audioPlaying) {
+            const ok = await initAudio();
+            if (ok) {
+                const scene = window._currentScene || 'room';
+                playSceneMusic(scene);
+                audioBtn.textContent = 'MUSIC \u25CF';
+                audioBtn.classList.add('active');
+            }
+        } else {
+            stopMusic();
+            audioBtn.textContent = 'MUSIC';
+            audioBtn.classList.remove('active');
+        }
     });
-    console.log('3D ASCII overlay loaded');
-} catch(e) { console.warn('3D ASCII overlay failed:', e.message); }
+});
+
+// Expose for the game engine
+window.playSceneMusic = playSceneMusic;
+window.stopMusic = stopMusic;
+window.applyGameModulation = applyGameModulation;
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+
+<script>
+// ===== P5.JS GENERATIVE BACKGROUND =====
+let p5Scene = 'room';
+let p5Transition = 0;
+let p5TargetScene = 'room';
+
+const p5Sketch = (p) => {
+    let particles = [];
+    let cols = [];
+    const maxParticles = 120;
+
+    p.setup = function() {
+        const cnv = p.createCanvas(p.windowWidth, p.windowHeight);
+        cnv.parent('p5-canvas');
+        p.noiseSeed(42);
+        p.colorMode(p.HSB, 360, 100, 100, 100);
+
+        for (let i = 0; i < maxParticles; i++) {
+            particles.push({
+                x: p.random(p.width),
+                y: p.random(p.height),
+                vx: 0, vy: 0,
+                size: p.random(1, 3),
+                life: p.random(0.3, 1)
+            });
+        }
+    };
+
+    p.draw = function() {
+        p.background(0, 0, 0, 8); // slow fade
+        const t = p.frameCount * 0.005;
+
+        // Scene parameters
+        const sceneParams = getSceneParams(p5Scene);
+        p5Transition = p.lerp(p5Transition, 1, 0.02);
+
+        switch (sceneParams.style) {
+            case 'flow':
+                drawFlowField(p, t, sceneParams);
+                break;
+            case 'network':
+                drawNetwork(p, t, sceneParams);
+                break;
+            case 'rings':
+                drawRings(p, t, sceneParams);
+                break;
+            case 'glitch':
+                drawGlitch(p, t, sceneParams);
+                break;
+            case 'constellation':
+                drawConstellation(p, t, sceneParams);
+                break;
+            default:
+                drawFlowField(p, t, sceneParams);
+        }
+    };
+
+    p.windowResized = function() {
+        p.resizeCanvas(p.windowWidth, p.windowHeight);
+    };
+
+    // ===== SCENE DRAWING FUNCTIONS =====
+
+    function drawFlowField(p, t, params) {
+        const scale = 0.003;
+        const h = params.hue;
+        p.noStroke();
+        for (let i = 0; i < particles.length; i++) {
+            const pt = particles[i];
+            const angle = p.noise(pt.x * scale, pt.y * scale, t * params.speed) * p.TWO_PI * 2;
+            pt.vx = p.lerp(pt.vx, p.cos(angle) * params.force, 0.1);
+            pt.vy = p.lerp(pt.vy, p.sin(angle) * params.force, 0.1);
+            pt.x += pt.vx;
+            pt.y += pt.vy;
+            if (pt.x < 0) pt.x = p.width;
+            if (pt.x > p.width) pt.x = 0;
+            if (pt.y < 0) pt.y = p.height;
+            if (pt.y > p.height) pt.y = 0;
+            p.fill(h, params.sat, params.bri, pt.life * params.alpha * 60);
+            p.circle(pt.x, pt.y, pt.size * params.sizeMul);
+        }
+    }
+
+    function drawNetwork(p, t, params) {
+        const count = 40;
+        const pts = [];
+        for (let i = 0; i < count; i++) {
+            const x = p.width * 0.5 + p.cos(t * params.speed + i * 0.8) * p.width * 0.3 * p.sin(i * 0.3);
+            const y = p.height * 0.5 + p.sin(t * params.speed * 0.7 + i * 1.1) * p.height * 0.3 * p.cos(i * 0.4);
+            pts.push({ x, y });
+            p.noStroke();
+            p.fill(params.hue, params.sat, params.bri, params.alpha * 40);
+            p.circle(x, y, 3);
+        }
+        // connections
+        p.stroke(params.hue, params.sat, params.bri, params.alpha * 12);
+        p.strokeWeight(0.5);
+        for (let i = 0; i < pts.length; i++) {
+            for (let j = i + 1; j < pts.length; j++) {
+                const d = p.dist(pts[i].x, pts[i].y, pts[j].x, pts[j].y);
+                if (d < 180) {
+                    p.line(pts[i].x, pts[i].y, pts[j].x, pts[j].y);
+                }
+            }
+        }
+    }
+
+    function drawRings(p, t, params) {
+        p.noFill();
+        const cx = p.width / 2;
+        const cy = p.height / 2;
+        for (let i = 0; i < 8; i++) {
+            const r = 50 + i * 40 + p.sin(t * params.speed + i * 0.5) * 20;
+            const wobble = p.noise(i * 0.5, t * params.speed) * 30;
+            p.stroke(params.hue + i * 5, params.sat, params.bri, params.alpha * 15);
+            p.strokeWeight(1);
+            p.beginShape();
+            for (let a = 0; a < p.TWO_PI; a += 0.1) {
+                const rr = r + p.sin(a * 3 + t * 2) * wobble;
+                p.vertex(cx + p.cos(a) * rr, cy + p.sin(a) * rr);
+            }
+            p.endShape(p.CLOSE);
+        }
+    }
+
+    function drawGlitch(p, t, params) {
+        // Horizontal glitch bars
+        for (let i = 0; i < 15; i++) {
+            const y = p.random(p.height);
+            const h = p.random(1, 8);
+            const offset = p.random(-30, 30) * (p.noise(t * 5, i) - 0.5) * 2;
+            p.noStroke();
+            p.fill(params.hue + p.random(-20, 20), params.sat, params.bri, params.alpha * 20);
+            p.rect(offset, y, p.width, h);
+        }
+        // Scattered particles
+        p.noStroke();
+        for (let i = 0; i < 30; i++) {
+            const x = p.random(p.width);
+            const y = p.random(p.height);
+            const s = p.random(2, 8);
+            p.fill(params.hue, params.sat, params.bri, p.random(5, 25));
+            p.rect(x, y, s, s * p.random(0.2, 3));
+        }
+    }
+
+    function drawConstellation(p, t, params) {
+        const count = 50;
+        p.noStroke();
+        for (let i = 0; i < count; i++) {
+            const seed = i * 100;
+            const x = (p.noise(seed, t * params.speed * 0.3) * 1.4 - 0.2) * p.width;
+            const y = (p.noise(seed + 50, t * params.speed * 0.3) * 1.4 - 0.2) * p.height;
+            const s = 1 + p.sin(t * 2 + i) * 0.8;
+            const a = (0.1 + p.sin(t + i * 0.5) * 0.08) * params.alpha * 50;
+            p.fill(params.hue + p.sin(i * 0.3) * 15, params.sat * 0.5, params.bri, a);
+            p.circle(x, y, s + 1);
+            // occasional bright star
+            if (i % 7 === 0) {
+                p.fill(params.hue, params.sat * 0.3, 100, a * 1.5);
+                p.circle(x, y, s * 0.5);
+            }
+        }
+    }
+
+    function getSceneParams(scene) {
+        const presets = {
+            room:       { style: 'flow',         hue: 35,  sat: 40, bri: 50, speed: 0.5, force: 0.8, alpha: 0.5, sizeMul: 1.0 },
+            chat:       { style: 'network',       hue: 210, sat: 30, bri: 55, speed: 0.6, force: 0.5, alpha: 0.6, sizeMul: 0.8 },
+            history:    { style: 'rings',          hue: 25,  sat: 50, bri: 45, speed: 0.3, force: 0.6, alpha: 0.5, sizeMul: 1.2 },
+            cosmic:     { style: 'constellation',  hue: 270, sat: 40, bri: 60, speed: 0.4, force: 0.3, alpha: 0.7, sizeMul: 0.6 },
+            quantum:    { style: 'flow',           hue: 200, sat: 35, bri: 55, speed: 0.8, force: 1.2, alpha: 0.5, sizeMul: 0.7 },
+            crisis:     { style: 'glitch',         hue: 0,   sat: 60, bri: 50, speed: 1.0, force: 2.0, alpha: 0.8, sizeMul: 1.5 },
+            ending:     { style: 'constellation',  hue: 140, sat: 30, bri: 50, speed: 0.2, force: 0.2, alpha: 0.4, sizeMul: 0.5 }
+        };
+        return presets[scene] || presets.room;
+    }
+};
+
+// Initialize p5
+new p5(p5Sketch);
+
+// Scene setter called by the game engine
+window.setP5Scene = function(sceneName) {
+    if (sceneName === p5Scene) return;
+    p5Scene = sceneName;
+};
+
+window.setP5Scene('room');
 </script>
 
 <script>
@@ -1114,13 +1417,8 @@ try {
         currentScene = name;
         sceneEl.className = 'scene-' + name;
 
-        // Update 3D ASCII scene to match
-        const art3dMap = {
-            room: 'room', chat: 'agent', history: 'temple',
-            cosmic: 'signal', quantum: 'network', crisis: 'crisis', ending: 'ending'
-        };
-        const art3d = art3dMap[name] || 'room';
-        if (window.set3dScene) window.set3dScene(art3d);
+        // Update p5.js generative visuals to match
+        if (window.setP5Scene) window.setP5Scene(name);
 
         const hueMap = {
             room: { r: 200, g: 160, b: 96 },
@@ -1131,6 +1429,12 @@ try {
             crisis: { r: 200, g: 120, b: 100 },
         };
         if (hueMap[name]) pHue = hueMap[name];
+
+        // Update dynamic music to match scene
+        window._currentScene = name;
+        if (window.playSceneMusic && typeof audioPlaying !== 'undefined' && audioPlaying) {
+            window.playSceneMusic(name);
+        }
     }
 
     // ===== RENDER STORY =====
@@ -1193,6 +1497,11 @@ try {
         });
 
         storyContent.appendChild(section);
+
+        // Feed game variables to music modulation after each story beat
+        if (window.applyGameModulation) {
+            try { window.applyGameModulation(story.variablesState); } catch(e) {}
+        }
 
         // Scroll to the start of the new section
         requestAnimationFrame(() => {
@@ -1318,6 +1627,9 @@ try {
             html += '</div>';
         });
         statsPanel.innerHTML = html;
+
+        // Feed game variables to music modulation engine
+        if (window.applyGameModulation) window.applyGameModulation(vars);
     }
 
     // ===== EVENT HANDLERS =====
