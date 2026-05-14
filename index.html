@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playvolution</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #c8c8c0;
+            font-family: 'Crimson Text', Georgia, serif;
+            font-size: 18px;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        #title {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+
+        #title h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #8a8a7a;
+            margin-bottom: 20px;
+        }
+
+        .story-section {
+            margin-bottom: 30px;
+        }
+
+        .story-text p {
+            margin-bottom: 16px;
+        }
+
+        .story-text em {
+            color: #a0a090;
+            font-style: italic;
+        }
+
+        .story-text strong {
+            color: #d4d4c8;
+            font-weight: 600;
+        }
+
+        /* Stats display */
+        .stats-display {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            color: #5a5a50;
+            background: #111111;
+            border-left: 2px solid #2a2a22;
+            padding: 12px 16px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        /* Choices */
+        .choices {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #1a1a18;
+        }
+
+        .choice {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: 1px solid #2a2a22;
+            color: #a8a898;
+            font-family: 'Crimson Text', Georgia, serif;
+            font-size: 17px;
+            padding: 12px 20px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            line-height: 1.5;
+        }
+
+        .choice:hover {
+            background: #141410;
+            border-color: #4a4a3a;
+            color: #d4d4c4;
+        }
+
+        .choice:active {
+            background: #1a1a14;
+        }
+
+        .choice.disabled {
+            color: #3a3a32;
+            border-color: #1a1a18;
+            cursor: default;
+        }
+
+        .choice.disabled:hover {
+            background: none;
+            border-color: #1a1a18;
+            color: #3a3a32;
+        }
+
+        /* Tags rendering */
+        .tag-section, .tag-divider {
+            display: none;
+        }
+
+        /* Section headers */
+        .section-header {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #4a4a40;
+            margin: 30px 0 15px;
+            padding-top: 20px;
+            border-top: 1px solid #1a1a18;
+        }
+
+        /* Cosmic text - for cosmic awareness moments */
+        .cosmic {
+            color: #b8a8c8;
+            font-style: italic;
+        }
+
+        /* Quantum text */
+        .quantum {
+            color: #a8b8c8;
+        }
+
+        /* Entropiric text */
+        .entropiric {
+            color: #c8a8a0;
+        }
+
+        /* Ember glow */
+        .ember {
+            color: #c8a060;
+        }
+
+        /* Loading */
+        #loading {
+            text-align: center;
+            padding: 40px;
+            color: #4a4a40;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+        }
+
+        /* Error */
+        #error {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #c86050;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+        }
+
+        /* Scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+            body { font-size: 16px; }
+            #game-container { padding: 20px 16px 60px; }
+            .choice { font-size: 16px; padding: 10px 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="title">
+            <h1>Playvolution</h1>
+        </div>
+        <div id="loading">Loading story...</div>
+        <div id="error"></div>
+        <div id="story" class="story-text"></div>
+        <div id="choices" class="choices"></div>
+    </div>
+
+    <script src="https://unpkg.com/inkjs@2.4.0/dist/ink.js"></script>
+    <script>
+
+        const storyEl = document.getElementById('story');
+        const choicesEl = document.getElementById('choices');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+
+        function showError(msg) {
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            errorEl.textContent = msg;
+            console.error(msg);
+        }
+
+        async function loadStory() {
+            try {
+                const resp = await fetch('inkle/story.json');
+                if (!resp.ok) throw new Error('Could not load story.json: ' + resp.status);
+                const json = await resp.json();
+
+                if (typeof inkjs === 'undefined') {
+                    throw new Error('inkjs library not loaded');
+                }
+
+                var story = new inkjs.Story(json);
+                loadingEl.style.display = 'none';
+                continueStory(story);
+
+            } catch (err) {
+                showError('Error: ' + err.message);
+                console.error(err);
+            }
+        }
+
+        function continueStory(story) {
+            choicesEl.innerHTML = '';
+
+            var paragraphs = [];
+            while (story.canContinue) {
+                var text = story.Continue();
+                if (text && text.trim()) {
+                    paragraphs.push(text.trim());
+                }
+            }
+
+            if (paragraphs.length > 0) {
+                var section = document.createElement('div');
+                section.className = 'story-section';
+                paragraphs.forEach(function(text) {
+                    var headerMatch = text.match(/^--\s*(.+?)\s*--$/);
+                    if (headerMatch) {
+                        var header = document.createElement('div');
+                        header.className = 'section-header';
+                        header.textContent = headerMatch[1];
+                        section.appendChild(header);
+                    } else {
+                        var p = document.createElement('p');
+                        p.textContent = text;
+                        section.appendChild(p);
+                    }
+                });
+                storyEl.appendChild(section);
+            }
+
+            if (story.currentChoices.length > 0) {
+                story.currentChoices.forEach(function(choice, index) {
+                    var btn = document.createElement('button');
+                    btn.className = 'choice';
+                    btn.textContent = choice.text;
+                    btn.addEventListener('click', function() {
+                        story.ChooseChoiceIndex(index);
+                        continueStory(story);
+                    });
+                    choicesEl.appendChild(btn);
+                });
+            }
+
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        loadStory();
+    </script>
+</body>
+</html>
