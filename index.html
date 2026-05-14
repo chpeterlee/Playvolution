@@ -85,6 +85,14 @@
         #ascii3d-container td {
             color: var(--text-dim);
             background: transparent !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+        }
+
+        #ascii3d-container table {
+            margin: 0 auto;
+            border-spacing: 0 !important;
+            border-collapse: collapse !important;
         }
 
         /* ===== MAIN LAYOUT ===== */
@@ -674,7 +682,7 @@ try {
     camera3d.position.z = 8;
 
     const renderer3d = new THREE.WebGLRenderer({ alpha: true });
-    const asciiEffect = new AsciiEffect(renderer3d, ' .,:;=+*#%@', { invert: true, resolution: 0.15 });
+    const asciiEffect = new AsciiEffect(renderer3d, ' .,:;=+*#%@', { invert: false, resolution: 0.15 });
     asciiEffect.setSize(window.innerWidth, window.innerHeight);
 
     const el = asciiEffect.domElement;
