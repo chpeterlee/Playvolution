@@ -233,25 +233,30 @@
         /* Scroll-down arrow */
         #scroll-down-hint {
             position: fixed;
-            bottom: 50px;
+            bottom: 14px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 8;
-            font-size: 16px;
+            z-index: 25;
+            font-size: 14px;
             color: var(--text-faint);
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.4s ease;
             animation: hintBounce 2s ease-in-out infinite;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 4px 12px;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
         }
 
         #scroll-down-hint.visible {
-            opacity: 0.6;
+            opacity: 0.7;
         }
 
         @keyframes hintBounce {
             0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(6px); }
+            50% { transform: translateX(-50%) translateY(4px); }
         }
 
         /* ===== CHOICES - PINNED BOTTOM ===== */
@@ -624,12 +629,29 @@
     const statsPanel = $('stats-panel');
     const scrollHint = $('scroll-down-hint');
 
-    // Track scroll position for hint arrow
-    storyArea.addEventListener('scroll', updateScrollHint);
-
+    // Scroll hint: show when there's unread text below
     function updateScrollHint() {
-        const atBottom = storyArea.scrollTop + storyArea.clientHeight >= storyArea.scrollHeight - 30;
-        scrollHint.classList.toggle('visible', !atBottom && storyArea.scrollHeight > storyArea.clientHeight + 50);
+        const hasScroll = storyArea.scrollHeight > storyArea.clientHeight + 20;
+        const atBottom = (storyArea.scrollHeight - storyArea.scrollTop - storyArea.clientHeight) < 30;
+        const show = hasScroll && !atBottom;
+        if (show) {
+            scrollHint.classList.add('visible');
+        } else {
+            scrollHint.classList.remove('visible');
+        }
+    }
+
+    storyArea.addEventListener('scroll', updateScrollHint);
+    window.addEventListener('resize', updateScrollHint);
+
+    // Scroll story area to show a specific element at the top
+    function scrollToElement(el) {
+        if (!el) return;
+        const offset = el.offsetTop - storyArea.offsetTop;
+        storyArea.scrollTo({ top: Math.max(0, offset - 10), behavior: 'smooth' });
+        // Check hint after scroll settles
+        setTimeout(updateScrollHint, 600);
+        setTimeout(updateScrollHint, 1200);
     }
 
     // ===== PARTICLES =====
@@ -775,8 +797,7 @@
 
         // Scroll to the start of the new section
         requestAnimationFrame(() => {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            setTimeout(updateScrollHint, 500);
+            scrollToElement(section);
         });
 
         // Show choices if available
@@ -822,8 +843,7 @@
         // Scroll so new text before choices is visible
         requestAnimationFrame(() => {
             const lastSection = storyContent.lastElementChild;
-            if (lastSection) lastSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            setTimeout(updateScrollHint, 500);
+            if (lastSection) scrollToElement(lastSection);
         });
     }
 
