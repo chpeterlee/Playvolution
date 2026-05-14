@@ -230,6 +230,30 @@
             opacity: 0.5;
         }
 
+        /* Scroll-down arrow */
+        #scroll-down-hint {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8;
+            font-size: 16px;
+            color: var(--text-faint);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            animation: hintBounce 2s ease-in-out infinite;
+        }
+
+        #scroll-down-hint.visible {
+            opacity: 0.6;
+        }
+
+        @keyframes hintBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(6px); }
+        }
+
         /* ===== CHOICES - PINNED BOTTOM ===== */
         #choices-area {
             flex-shrink: 0;
@@ -562,6 +586,9 @@
         </div>
     </div>
 
+    <!-- Scroll-down hint -->
+    <div id="scroll-down-hint">&#x25BC;</div>
+
     <!-- Pinned bottom choices -->
     <div id="choices-area">
         <div id="choices-inner"></div>
@@ -595,6 +622,15 @@
     const choicesInner = $('choices-inner');
     const historyPanel = $('history-panel');
     const statsPanel = $('stats-panel');
+    const scrollHint = $('scroll-down-hint');
+
+    // Track scroll position for hint arrow
+    storyArea.addEventListener('scroll', updateScrollHint);
+
+    function updateScrollHint() {
+        const atBottom = storyArea.scrollTop + storyArea.clientHeight >= storyArea.scrollHeight - 30;
+        scrollHint.classList.toggle('visible', !atBottom && storyArea.scrollHeight > storyArea.clientHeight + 50);
+    }
 
     // ===== PARTICLES =====
     const pCanvas = $('particle-canvas');
@@ -740,6 +776,7 @@
         // Scroll to the start of the new section
         requestAnimationFrame(() => {
             section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(updateScrollHint, 500);
         });
 
         // Show choices if available
@@ -754,6 +791,7 @@
     function showChoices() {
         choicesInner.innerHTML = '';
         choicesArea.classList.add('open');
+        scrollHint.classList.remove('visible');
 
         story.currentChoices.forEach((choice, i) => {
             const card = document.createElement('div');
@@ -785,6 +823,7 @@
         requestAnimationFrame(() => {
             const lastSection = storyContent.lastElementChild;
             if (lastSection) lastSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            setTimeout(updateScrollHint, 500);
         });
     }
 
