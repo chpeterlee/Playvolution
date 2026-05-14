@@ -660,227 +660,97 @@
 
 <script src="https://unpkg.com/inkjs@2.4.0/dist/ink.js"></script>
 
-<script type="importmap">
-{
-    "imports": {
-        "three": "https://unpkg.com/three@0.163.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
-    }
-}
-</script>
 
 <script type="module">
-import * as THREE from 'three';
-import { AsciiEffect } from 'three/addons/effects/AsciiEffect.js';
+try {
+    const THREE = await import('https://unpkg.com/three@0.163.0/build/three.module.js');
+    const { AsciiEffect } = await import('https://unpkg.com/three@0.163.0/examples/jsm/effects/AsciiEffect.js');
 
-// ===== 3D ASCII SCENE =====
-const ascii3dContainer = document.getElementById('ascii3d-container');
-const scene3d = new THREE.Scene();
-const camera3d = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-camera3d.position.z = 8;
+    const container = document.getElementById('ascii3d-container');
+    if (!container) throw new Error('no container');
 
-const renderer3d = new THREE.WebGLRenderer({ alpha: true });
-renderer3d.setSize(window.innerWidth, window.innerHeight);
+    const scene3d = new THREE.Scene();
+    const camera3d = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera3d.position.z = 8;
 
-const asciiEffect = new AsciiEffect(renderer3d, ' .,:;=+*#%@', {
-    invert: true,
-    resolution: 0.15
-});
-asciiEffect.setSize(window.innerWidth, window.innerHeight);
-asciiEffect.domElement.style.color = '#c8a060';
-asciiEffect.domElement.style.backgroundColor = 'transparent';
-asciiEffect.domElement.style.fontFamily = "'IBM Plex Mono', monospace';
-asciiEffect.domElement.style.fontSize = '6px';
-asciiEffect.domElement.style.lineHeight = '1';
-asciiEffect.domElement.style.letterSpacing = '1px';
-asciiEffect.domElement.id = 'ascii3d-output';
-
-// Move the AsciiEffect output into our container
-ascii3dContainer.appendChild(asciiEffect.domElement);
-
-// Lighting
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-scene3d.add(ambientLight);
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-dirLight.position.set(5, 5, 5);
-scene3d.add(dirLight);
-const pointLight = new THREE.PointLight(0xc8a060, 0.8, 20);
-pointLight.position.set(-3, 2, 4);
-scene3d.add(pointLight);
-
-// Material
-const wireMat = new THREE.MeshStandardMaterial({
-    color: 0xc8a060,
-    wireframe: true,
-    transparent: true,
-    opacity: 0.7
-});
-const solidMat = new THREE.MeshStandardMaterial({
-    color: 0xc8a060,
-    wireframe: false,
-    transparent: true,
-    opacity: 0.5
-});
-
-// 3D Objects library
-const meshes = {};
-
-// Agent: icosahedron (geometric AI)
-meshes.agent = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 1), wireMat);
-
-// Agent anomaly: octahedron with inner sphere
-meshes.agent_anomaly = new THREE.Group();
-const outerOcta = new THREE.Mesh(new THREE.OctahedronGeometry(1.8, 0), wireMat.clone());
-const innerSphere = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 6), solidMat.clone());
-meshes.agent_anomaly.add(outerOcta, innerSphere);
-
-// City: box buildings cluster
-meshes.city = new THREE.Group();
-for (let i = 0; i < 7; i++) {
-    const h = 0.5 + Math.random() * 2;
-    const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, h, 0.5), wireMat.clone());
-    box.position.set(-2 + i * 0.7, h / 2 - 1, 0);
-    meshes.city.add(box);
-}
-
-// Temple: pyramid
-meshes.temple = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.5, 4), wireMat.clone());
-meshes.temple.rotation.y = Math.PI / 4;
-
-// Network: connected spheres
-meshes.network = new THREE.Group();
-const nodePositions = [
-    [0, 0, 0], [2, 1, 0], [-2, 1, 0], [1, -1, 1], [-1, -1, -1],
-    [0, 2, -1], [1.5, 0, -1.5], [-1.5, 0, 1.5]
-];
-nodePositions.forEach(([x, y, z]) => {
-    const node = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 4), solidMat.clone());
-    node.position.set(x, y, z);
-    meshes.network.add(node);
-});
-// Connections as lines
-const lineMat = new THREE.LineBasicMaterial({ color: 0xc8a060, transparent: true, opacity: 0.3 });
-for (let i = 0; i < nodePositions.length; i++) {
-    for (let j = i + 1; j < nodePositions.length; j++) {
-        const dist = Math.sqrt(
-            Math.pow(nodePositions[i][0] - nodePositions[j][0], 2) +
-            Math.pow(nodePositions[i][1] - nodePositions[j][1], 2) +
-            Math.pow(nodePositions[i][2] - nodePositions[j][2], 2)
-        );
-        if (dist < 3) {
-            const geo = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(...nodePositions[i]),
-                new THREE.Vector3(...nodePositions[j])
-            ]);
-            meshes.network.add(new THREE.Line(geo, lineMat));
-        }
-    }
-}
-
-// Signal: torus knot
-meshes.signal = new THREE.Mesh(new THREE.TorusKnotGeometry(1, 0.3, 64, 8, 2, 3), wireMat.clone());
-
-// Crisis: shattered torus
-meshes.crisis = new THREE.Group();
-const crisisMat = new THREE.MeshStandardMaterial({ color: 0xc86050, wireframe: true, transparent: true, opacity: 0.6 });
-for (let i = 0; i < 8; i++) {
-    const frag = new THREE.Mesh(new THREE.TetrahedronGeometry(0.4 + Math.random() * 0.3, 0), crisisMat.clone());
-    const angle = (i / 8) * Math.PI * 2;
-    frag.position.set(Math.cos(angle) * 1.2, Math.sin(angle) * 1.2, (Math.random() - 0.5) * 0.5);
-    frag.userData.angle = angle;
-    frag.userData.radius = 1.2;
-    frag.userData.speed = 0.5 + Math.random() * 0.5;
-    meshes.crisis.add(frag);
-}
-
-// Default/room: slowly rotating torus
-meshes.room = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.4, 8, 16), wireMat.clone());
-
-// Ending: star/burst
-meshes.ending = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 0), solidMat.clone());
-
-// Scene state
-let current3dMesh = null;
-let target3dMesh = 'room';
-let meshTransitioning = false;
-
-function set3dScene(name) {
-    if (name === target3dMesh) return;
-    // Remove current
-    if (current3dMesh) {
-        scene3d.remove(current3dMesh);
-    }
-    // Set new
-    target3dMesh = name;
-    const mesh = meshes[name] || meshes.room;
-    scene3d.add(mesh);
-    current3dMesh = mesh;
-
-    // Adjust color by scene
-    const colorMap = {
-        room: '#c8a060', chat: '#a8b8c8', history: '#c8a060',
-        cosmic: '#b8a8c8', quantum: '#a8b8c8', crisis: '#c86050', ending: '#a0c8a0'
-    };
-    const c = colorMap[name] || '#c8a060';
-    asciiEffect.domElement.style.color = c;
-}
-
-// Initialize
-set3dScene('room');
-
-// 3D Animation loop
-const clock = new THREE.Clock();
-function animate3d() {
-    requestAnimationFrame(animate3d);
-    const t = clock.getElapsedTime();
-
-    if (current3dMesh) {
-        // Default rotation
-        current3dMesh.rotation.y = t * 0.3;
-        current3dMesh.rotation.x = Math.sin(t * 0.2) * 0.2;
-
-        // Per-scene animations
-        if (target3dMesh === 'agent_anomaly' && current3dMesh.children) {
-            current3dMesh.children[0].rotation.y = t * 0.5;
-            current3dMesh.children[0].rotation.x = t * 0.3;
-            current3dMesh.children[1].rotation.z = t * 0.8;
-            const scale = 1 + Math.sin(t * 2) * 0.1;
-            current3dMesh.children[1].scale.set(scale, scale, scale);
-        } else if (target3dMesh === 'crisis' && current3dMesh.children) {
-            current3dMesh.children.forEach(frag => {
-                const a = frag.userData.angle + t * frag.userData.speed;
-                const r = frag.userData.radius + Math.sin(t * 3 + frag.userData.angle) * 0.3;
-                frag.position.set(Math.cos(a) * r, Math.sin(a) * r, frag.position.z);
-                frag.rotation.x = t * frag.userData.speed * 2;
-                frag.rotation.z = t * frag.userData.speed;
-            });
-        } else if (target3dMesh === 'network') {
-            current3dMesh.rotation.y = t * 0.15;
-            current3dMesh.rotation.x = Math.sin(t * 0.1) * 0.3;
-        } else if (target3dMesh === 'temple') {
-            current3dMesh.rotation.y = t * 0.1 + Math.PI / 4;
-        }
-    }
-
-    // Camera gentle float
-    camera3d.position.x = Math.sin(t * 0.15) * 0.5;
-    camera3d.position.y = Math.cos(t * 0.1) * 0.3;
-    camera3d.lookAt(0, 0, 0);
-
-    asciiEffect.render(scene3d, camera3d);
-}
-animate3d();
-
-// Handle resize
-window.addEventListener('resize', () => {
-    camera3d.aspect = window.innerWidth / window.innerHeight;
-    camera3d.updateProjectionMatrix();
-    renderer3d.setSize(window.innerWidth, window.innerHeight);
+    const renderer3d = new THREE.WebGLRenderer({ alpha: true });
+    const asciiEffect = new AsciiEffect(renderer3d, ' .,:;=+*#%@', { invert: true, resolution: 0.15 });
     asciiEffect.setSize(window.innerWidth, window.innerHeight);
-});
 
-// Expose scene setter globally for the game engine
-window.set3dScene = set3dScene;
+    const el = asciiEffect.domElement;
+    el.style.color = '#c8a060';
+    el.style.backgroundColor = 'transparent';
+    el.style.fontFamily = "'IBM Plex Mono', monospace";
+    el.style.fontSize = '6px';
+    el.style.lineHeight = '1';
+    el.style.letterSpacing = '1px';
+    container.appendChild(el);
+
+    scene3d.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const dl = new THREE.DirectionalLight(0xffffff, 1.2);
+    dl.position.set(5, 5, 5);
+    scene3d.add(dl);
+
+    const wm = new THREE.MeshStandardMaterial({ color: 0xc8a060, wireframe: true, transparent: true, opacity: 0.7 });
+    const sm = new THREE.MeshStandardMaterial({ color: 0xc8a060, wireframe: false, transparent: true, opacity: 0.5 });
+
+    const m = {};
+    m.room = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.4, 8, 16), wm);
+    m.agent = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 1), wm);
+    m.agent_anomaly = new THREE.Group();
+    m.agent_anomaly.add(new THREE.Mesh(new THREE.OctahedronGeometry(1.8, 0), wm.clone()), new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 6), sm.clone()));
+    m.city = new THREE.Group();
+    for (let i = 0; i < 7; i++) { const h = 0.5+Math.random()*2; const b = new THREE.Mesh(new THREE.BoxGeometry(0.5,h,0.5), wm.clone()); b.position.set(-2+i*0.7, h/2-1, 0); m.city.add(b); }
+    m.temple = new THREE.Mesh(new THREE.ConeGeometry(1.5, 2.5, 4), wm.clone());
+    m.network = new THREE.Group();
+    [[0,0,0],[2,1,0],[-2,1,0],[1,-1,1],[-1,-1,-1],[0,2,-1],[1.5,0,-1.5],[-1.5,0,1.5]].forEach(([x,y,z]) => { const n = new THREE.Mesh(new THREE.SphereGeometry(0.2,6,4), sm.clone()); n.position.set(x,y,z); m.network.add(n); });
+    const lm = new THREE.LineBasicMaterial({color:0xc8a060,transparent:true,opacity:0.3});
+    const np = [[0,0,0],[2,1,0],[-2,1,0],[1,-1,1],[-1,-1,-1],[0,2,-1],[1.5,0,-1.5],[-1.5,0,1.5]];
+    for(let i=0;i<np.length;i++)for(let j=i+1;j<np.length;j++){const d=Math.sqrt((np[i][0]-np[j][0])**2+(np[i][1]-np[j][1])**2+(np[i][2]-np[j][2])**2);if(d<3){m.network.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...np[i]),new THREE.Vector3(...np[j])]),lm));}}
+    m.signal = new THREE.Mesh(new THREE.TorusKnotGeometry(1, 0.3, 64, 8, 2, 3), wm.clone());
+    m.crisis = new THREE.Group();
+    for(let i=0;i<8;i++){const f=new THREE.Mesh(new THREE.TetrahedronGeometry(0.4+Math.random()*0.3,0),new THREE.MeshStandardMaterial({color:0xc86050,wireframe:true,transparent:true,opacity:0.6}));const a=(i/8)*Math.PI*2;f.position.set(Math.cos(a)*1.2,Math.sin(a)*1.2,(Math.random()-0.5)*0.5);f.userData={angle:a,radius:1.2,speed:0.5+Math.random()*0.5};m.crisis.add(f);}
+    m.ending = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5, 0), sm.clone());
+
+    let cur = null, tgt = 'room';
+    const cm = {room:'#c8a060',chat:'#a8b8c8',history:'#c8a060',cosmic:'#b8a8c8',quantum:'#a8b8c8',crisis:'#c86050',ending:'#a0c8a0'};
+
+    window.set3dScene = function(name) {
+        if (name === tgt) return;
+        if (cur) scene3d.remove(cur);
+        tgt = name;
+        cur = m[name] || m.room;
+        scene3d.add(cur);
+        el.style.color = cm[name] || '#c8a060';
+    };
+    window.set3dScene('room');
+
+    const clock = new THREE.Clock();
+    (function loop() {
+        requestAnimationFrame(loop);
+        const t = clock.getElapsedTime();
+        if (cur) {
+            cur.rotation.y = t * 0.3;
+            cur.rotation.x = Math.sin(t * 0.2) * 0.2;
+            if (tgt==='agent_anomaly' && cur.children) { cur.children[0].rotation.y=t*0.5; cur.children[1].rotation.z=t*0.8; const s=1+Math.sin(t*2)*0.1; cur.children[1].scale.set(s,s,s); }
+            else if (tgt==='crisis' && cur.children) { cur.children.forEach(f=>{const a=f.userData.angle+t*f.userData.speed;const r=f.userData.radius+Math.sin(t*3+f.userData.angle)*0.3;f.position.set(Math.cos(a)*r,Math.sin(a)*r,f.position.z);f.rotation.x=t*f.userData.speed*2;}); }
+            else if (tgt==='temple') { cur.rotation.y=t*0.1+Math.PI/4; }
+            else if (tgt==='network') { cur.rotation.y=t*0.15; cur.rotation.x=Math.sin(t*0.1)*0.3; }
+        }
+        camera3d.position.x = Math.sin(t*0.15)*0.5;
+        camera3d.position.y = Math.cos(t*0.1)*0.3;
+        camera3d.lookAt(0, 0, 0);
+        asciiEffect.render(scene3d, camera3d);
+    })();
+
+    window.addEventListener('resize', () => {
+        camera3d.aspect = window.innerWidth / window.innerHeight;
+        camera3d.updateProjectionMatrix();
+        renderer3d.setSize(window.innerWidth, window.innerHeight);
+        asciiEffect.setSize(window.innerWidth, window.innerHeight);
+    });
+    console.log('3D ASCII overlay loaded');
+} catch(e) { console.warn('3D ASCII overlay failed:', e.message); }
 </script>
 
 <script>
