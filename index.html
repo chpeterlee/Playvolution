@@ -737,9 +737,9 @@
 
         storyContent.appendChild(section);
 
-        // Scroll to new content
+        // Scroll to the start of the new section
         requestAnimationFrame(() => {
-            storyArea.scrollTop = storyArea.scrollHeight;
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
 
         // Show choices if available
@@ -765,26 +765,26 @@
                 addToLog('You', choice.text);
 
                 // Show player's choice in story
-                const section = document.createElement('div');
-                section.className = 'story-section';
+                const choiceSection = document.createElement('div');
+                choiceSection.className = 'story-section';
                 const el = document.createElement('p');
                 el.className = 'player-text';
                 el.style.color = 'var(--accent)';
                 el.textContent = '> ' + choice.text;
-                section.appendChild(el);
-                storyContent.appendChild(section);
+                choiceSection.appendChild(el);
+                storyContent.appendChild(choiceSection);
 
                 setTimeout(() => {
-                    storyArea.scrollTop = storyArea.scrollHeight;
                     renderStory();
                 }, 150);
             });
             choicesInner.appendChild(card);
         });
 
-        // Scroll so choices are visible
+        // Scroll so new text before choices is visible
         requestAnimationFrame(() => {
-            storyArea.scrollTop = storyArea.scrollHeight;
+            const lastSection = storyContent.lastElementChild;
+            if (lastSection) lastSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     }
 
