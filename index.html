@@ -78,13 +78,18 @@
             transition: opacity 2s ease;
         }
 
-        #ascii3d-container table {
-            margin: 0 auto;
+        #ascii3d-container,
+        #ascii3d-container *,
+        #ascii3d-container table,
+        #ascii3d-container tbody,
+        #ascii3d-container tr,
+        #ascii3d-container td {
+            background: transparent !important;
+            background-color: transparent !important;
         }
 
         #ascii3d-container td {
             color: var(--text-dim);
-            background: transparent !important;
             padding: 0 !important;
             line-height: 1 !important;
         }
@@ -681,7 +686,8 @@ try {
     const camera3d = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
     camera3d.position.z = 8;
 
-    const renderer3d = new THREE.WebGLRenderer({ alpha: true });
+    const renderer3d = new THREE.WebGLRenderer();
+    renderer3d.setClearColor(0x000000, 1);
     const asciiEffect = new AsciiEffect(renderer3d, ' .,:;=+*#%@', { invert: false, resolution: 0.15 });
     asciiEffect.setSize(window.innerWidth, window.innerHeight);
 
