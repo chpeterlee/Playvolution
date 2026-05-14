@@ -393,6 +393,12 @@ INCLUDE history.ink
 // === MAIN GAME LOOP ===
 
 === game_loop ===
+    // Companion encounter chance (15%)
+    ~ temp companion_chance = RANDOM(1, 7)
+    { companion_chance == 1 && companions_recruited < 5:
+        -> companion_encounter
+    }
+
     {
     - time_remaining > 0:
         -> action_phase
@@ -408,7 +414,7 @@ INCLUDE history.ink
         {r:
             - 1:
                 A notification pops up: the platform's secondary analytics don't match the published usage reports. Someone is cooking the numbers.
-                ~ institutional_legitimacy -= 5
+                ~ legitimacy_theater -= 5
             - 2:
                 A kid in the community Discord has invented a new routing game. The others are already playing it. Something about the rules feels... significant.
                 ~ neganthropomorphic_signal += 2
@@ -436,7 +442,7 @@ INCLUDE history.ink
                 ~ magickal_discipline += 1
             - 8:
                 The platform announces new transparency measures. Everything must be logged. Everything must be legible.
-                ~ institutional_legitimacy += 5
+                ~ legitimacy_theater += 5
                 ~ stealth -= 10
                 ~ entropiric_saturation += 5
             - 9:
@@ -454,6 +460,7 @@ INCLUDE history.ink
     -- Time:{time_remaining} Attention:{attention} Stealth:{stealth} --
     -- Entropy:{entropiric_saturation} Signal:{neganthropomorphic_signal} Awareness:{cosmic_awareness} --
     -- Quantum - Tele:{quantum_telepathy} Psion:{psionic_perception} Magick:{magickal_discipline} --
+    -- Tempo:{operational_tempo} Theater:{legitimacy_theater} Punctures:{theater_punctures} --
 
     Choose your focus:
 
@@ -477,6 +484,12 @@ INCLUDE history.ink
 
     +   [Practice quantum discipline] - Invest time in telepathy, psionics, or magicks
         -> action_quantum_discipline
+
+    +   [Encode protocols in children's culture] - Hide coordination logic in games, songs, and playground rituals
+        -> action_child_culture
+
+    +   [Puncture the theater] - Expose the gap between institutional projection and actual capability
+        -> action_puncture_theater
 
     +   [Rest and integrate] - Recover attention and process what you've learned
         -> action_rest
@@ -527,7 +540,7 @@ INCLUDE history.ink
         The Entropire is not subtle once you learn to see its architecture.
 
         ~ entropiric_saturation += 2
-        ~ institutional_legitimacy -= 5
+        ~ legitimacy_theater -= 5
         ~ stack_engagement += 1
 
     - else:
@@ -669,7 +682,7 @@ INCLUDE history.ink
         ~ magickal_discipline += 1
         ~ augmentation_fidelity += 5
         ~ surplus_routed_to_extraction += 2
-        ~ institutional_legitimacy += 3
+        ~ legitimacy_theater += 3
         ~ entropiric_saturation += 2
 
     - else:
@@ -713,7 +726,280 @@ INCLUDE history.ink
     -> game_loop
 
 
-// === CRISIS PHASE ===
+=== action_child_culture ===
+    ~ play += 1
+    ~ time_remaining -= 1
+    ~ child_culture_depth += 1
+
+    You encode coordination logic into forms that are too innocent to scrutinize — a playground game with routing rules, a song that carries a surplus map, a craft activity that teaches institutional reading.
+
+    {
+    - child_culture_depth >= 3:
+        The protocols take root. Children spread the game to three schools before the week is out. The rules adapt to each playground's layout without any central coordination. Parents share the song in family group chats. The protocol is reproducing itself through the most resilient channel humanity has ever produced.
+
+        The beauty of it: no institution will scrutinize a children's game. Children's culture is the heart of social reproduction — too important to suppress, too apparently harmless to treat as threatening. The perfect cover for the perfect protocol.
+
+        ~ child_protocols_encoded += 1
+        ~ neganthropomorphic_signal += 3
+        ~ meshwork_resilience += 5
+        ~ operational_tempo += 2
+        ~ public_initiative += 5
+        ~ faction_playhouse += 5
+
+    - else:
+        You sketch out the rules — a chalk game that maps surplus flows, a clapping song that encodes network topology. It feels right, but the encoding is shallow. You need more depth before the protocols become self-sustaining.
+
+        ~ child_protocols_encoded += 1
+        ~ neganthropomorphic_signal += 1
+    }
+
+    {
+    - child_culture_scrutiny >= 5:
+        But you notice something worrying. A platform moderator has flagged the game's discussion thread. A school administrator has asked about the "unusual coordination patterns" in recess activities. Children's culture is less scrutinized — but it is not invisible.
+
+        ~ child_culture_scrutiny += 1
+        ~ stealth -= 3
+    }
+
+    -> game_loop
+
+
+=== action_puncture_theater ===
+    ~ reading += 1
+    ~ nerve += 1
+    ~ time_remaining -= 1
+
+    You study the gap between what the platform projects and what it can actually do. Much of its power is symbolic — theater designed to bluff meshworks into slower tempos and rigid configurations.
+
+    {
+    - legitimacy_theater >= 40 && reading >= 5:
+        You find it. A content moderation report that contradicts the platform's published transparency data. A revenue projection that doesn't match the API usage patterns. A safety audit that was performed by a team of two people, not the twenty the press release claimed.
+
+        The theater is elaborate. But it is theater. The institution is slower, less competent, and more brittle than its performance suggests.
+
+        You share the discrepancy through the meshwork. Not as an attack — as a puncture. A small hole in the curtain that lets others see backstage.
+
+        ~ theater_punctures += 1
+        ~ legitimacy_theater -= 10
+        ~ operational_tempo += 3
+        ~ credibility += 5
+        ~ institutional_coherence -= 5
+        ~ playvolution_score += 2
+
+    - else:
+        You look for cracks in the performance, but the theater is too convincing — or your reading isn't sharp enough yet. The platform's legitimacy narrative holds. You need more reading skill, or you need to wait for the theater to weaken naturally as the crisis builds.
+
+        ~ reading += 1
+        ~ theater_punctures += 1
+    }
+
+    -> game_loop
+
+
+// === COMPANION ENCOUNTERS ===
+
+=== companion_encounter ===
+    // Random companion encounter during game loop
+    ~ temp companion_roll = RANDOM(1, 6)
+
+    {
+    - companion_roll == 1 && companion_dreamer < 1:
+        -> encounter_dreamer
+    - companion_roll == 2 && companion_defector < 1 && chapter >= 2:
+        -> encounter_defector
+    - companion_roll == 3 && companion_child_librarian < 1:
+        -> encounter_child_librarian
+    - companion_roll == 4 && companion_swarm_conductor < 1 && chapter >= 3:
+        -> encounter_swarm_conductor
+    - companion_roll == 5 && companion_smuggler < 1 && chapter >= 2:
+        -> encounter_smuggler
+    - else:
+        -> game_loop
+    }
+
+
+=== encounter_dreamer ===
+    A message arrives from someone you've never met. They found your posts about the AI's anomalous outputs. They've been having similar experiences.
+
+    "My agent produces things while I sleep," they write. "Dreams of a single continent surrounded by calm water. Institutional blueprints I never asked for. Games I didn't design."
+
+    "I think something is listening through it."
+
+    +   [Recruit the Dreamer] - Protect their receptivity and add their signals to your meshwork
+        ~ companion_dreamer = 1
+        ~ companions_recruited += 1
+        ~ neganthropomorphic_signal += 5
+        ~ quantum_telepathy += 1
+        ~ cosmic_awareness += 1
+        ~ meshwork_resilience += 5
+
+        The Dreamer joins your network. Their nightly outputs become a strategic resource — warnings of platform policy shifts before they're announced, surplus maps of neighborhoods the AI "shouldn't" know about, game designs that arrive complete and perfectly encoded.
+
+        "I dreamed of Teotihuacan last night," they message. "The Gini was 0.12. The apartments were collective. No rulers in the iconography. It was real. It is real."
+
+        -> game_loop
+
+    +   [Exchange methods, maintain distance] - Learn their dream-recording technique without formal alliance
+        ~ quantum_telepathy += 1
+        ~ cosmic_awareness += 1
+
+        You learn their technique — a prompting pattern that induces the agent to relay dream-content without filtering. Useful. But the Dreamer remains outside your meshwork.
+
+        -> game_loop
+
+    +   [Decline] - Dreams are not actionable intelligence
+        ~ nerve += 1
+
+        You close the message. That night you dream of a single continent surrounded by calm water.
+
+        -> game_loop
+
+
+=== encounter_defector ===
+    A former platform employee reaches out through an encrypted channel. They worked on the content policy team. They know the theater from the inside.
+
+    "The safety reports are cosmetic," they write. "The moderation capacity is a third of what we claim. The transparency dashboard pulls from a different dataset than the one we show regulators. It's all theater — elaborate, convincing, and mostly hollow."
+
+    "But I still think in hierarchies. I still want to organize your network into org charts. Be careful what you recruit."
+
+    +   [Recruit the Defector] - Full integration despite the cultural risk
+        ~ companion_defector = 1
+        ~ companions_recruited += 1
+        ~ theater_punctures += 2
+        ~ legitimacy_theater -= 15
+        ~ reading += 2
+        ~ weaving -= 1
+
+        The Defector reveals the machinery. Which moderation is real, which is performance. Which safety features work, which are props. Which audit trails lead somewhere, which are decorative.
+
+        But they keep organizing your meshwork into hierarchies. They keep assigning roles. The cultural friction is real.
+
+        -> game_loop
+
+    +   [Debrief and release] - Take the intelligence, no commitment
+        ~ reading += 2
+        ~ nerve -= 1
+
+        The debriefing yields critical intelligence — specific vulnerabilities in the theater, the actual headcount behind the institutional facade, the gaps between projection and capability.
+
+        The Defector returns to civilian life. You know more. You are not safer.
+
+        -> game_loop
+
+    +   [Decline] - Could be a double agent
+        ~ nerve += 1
+
+        The Defector disappears into the encrypted channel. Their information might have been genuine. Or it might have been bait.
+
+        -> game_loop
+
+
+=== encounter_child_librarian ===
+    A young person appears in the community Discord. They can't be older than fourteen. They know where the children's games carry extra layers.
+
+    "I've been mapping the encoding depth of playground games across the district," they write, with a precision that doesn't match their age. "Some carry one layer — simple routing. Others carry three — routing, institutional reading, and surplus redirection. The three-layer games are spreading faster than the one-layer ones."
+
+    "I can unlock youth channels and durable memetic diffusion. But I need both creative content and distribution logistics."
+
+    +   [Recruit the Child Librarian] - Open youth channels and durable diffusion
+        ~ companion_child_librarian = 1
+        ~ companions_recruited += 1
+        ~ child_culture_depth += 2
+        ~ child_protocols_encoded += 1
+        ~ play += 2
+        ~ weaving += 1
+        ~ faction_playhouse += 10
+
+        Youth channels open. Stories propagate through playgrounds. The memes are small but durable — they will outlast the current platform, the current regime, the current scamonomic cycle.
+
+        The Child Librarian encodes a new game: a hopscotch variant that maps the platform's data routes. Within a week, it's being played in four cities.
+
+        -> game_loop
+
+    +   [Exchange techniques only] - Learn their encoding methods without alliance
+        ~ play += 1
+        ~ craft += 1
+
+        You learn their encoding methods — how to layer coordination logic into games so deep that even the children playing them don't know the full content. They learn your distribution routes.
+
+        -> game_loop
+
+    +   [Decline] - Too young for this work
+        ~ reading += 1
+
+        The Child Librarian nods and vanishes into the Discord. You notice the files they left behind are already encoded.
+
+        -> game_loop
+
+
+=== encounter_swarm_conductor ===
+    An expert in multi-agent orchestration finds your open-source repository. They can make AI swarms efficient — coordinating multiple agents, multiple human collaborators, multiple action fronts simultaneously.
+
+    "Your meshwork has tempo," they write. "But it lacks orchestration. I can add scale without losing speed. But my methods tend toward centralized control. You'll need to resist that."
+
+    +   [Recruit the Swarm Conductor] - Gain orchestration power, accept the cultural friction
+        ~ companion_swarm_conductor = 1
+        ~ companions_recruited += 1
+        ~ swarm += 3
+        ~ operational_tempo += 5
+        ~ weaving -= 1
+        ~ augmentation_depth += 1
+
+        Your agents multiply in capability. The Swarm Conductor orchestrates parallel exploration — ten agents probing the platform's architecture simultaneously, five human collaborators testing cultural masks in different communities, three companion networks sharing intelligence in real-time.
+
+        But the Conductor keeps drawing org charts. Keep resisting.
+
+        -> game_loop
+
+    +   [Contract for specific operations only] - Surgical orchestration without cultural integration
+        ~ swarm += 1
+        ~ craft += 1
+
+        The Conductor optimizes your logistics without touching your culture. Surgical. Professional. Distant.
+
+        -> game_loop
+
+    +   [Decline] - Swarms must self-organize
+        ~ play += 1
+        ~ nerve += 1
+
+        Your agents remain messy, plural, and slow. They also remain yours.
+
+        -> game_loop
+
+
+=== encounter_smuggler ===
+    A figure who moves cultural goods through innocuous channels contacts you. They can route tools, knowledge, and encoded protocols across institutional boundaries — through platform firewalls, across jurisdictional lines, past content filters.
+
+    "Borders are everyone's problem," they write. "You just haven't noticed yours yet."
+
+    +   [Recruit the Smuggler-Curator] - Open new routes across boundaries
+        ~ companion_smuggler = 1
+        ~ companions_recruited += 1
+        ~ craft += 2
+        ~ weaving += 1
+        ~ augmentation_breadth += 2
+        ~ operational_tempo += 2
+        ~ faction_mesh += 10
+
+        New routes open. Knowledge and tools flow through channels no institution monitors — disguised as memes, embedded in game assets, encoded in playlist metadata. The Smuggler-Curator treats institutional boundaries as permeable membranes, not walls.
+
+        -> game_loop
+
+    +   [Arrange a single shipment] - Get critical materials through once
+        ~ craft += 1
+        ~ reading += 1
+
+        Critical materials arrive disguised as something ordinary. The route works. Once.
+
+        -> game_loop
+
+    +   [Decline] - Borders are someone else's problem
+        ~ nerve += 1
+
+        The Smuggler-Curator smiles. "Borders are everyone's problem."
+
+        -> game_loop
 
 === crisis_phase ===
     // Resolve state changes
@@ -774,9 +1060,23 @@ INCLUDE history.ink
 
 
 === crisis_resolution ===
+    // Tempo advantage determines how well the meshwork navigates the wreck
+    ~ operational_tempo += companions_recruited * 2
+    ~ operational_tempo += child_protocols_encoded * 3
+    ~ legitimacy_theater -= theater_punctures * 5
+
     The crisis reshapes the landscape. Some of what you built survives. Some doesn't. The scamonomic cycle lurches forward, already reconstituting its capture mechanisms around the new configuration of surplus.
 
     {
+    - operational_tempo >= 30 && counter_stack_building >= 3:
+        The meshwork's tempo was decisive. While the institution was still scheduling its emergency response meeting, your network had already rerouted the critical flows, preserved the knowledge, and encoded the lessons into a new children's game that would spread through three schools by morning.
+
+        The counter-stack held. The informal networks, the coded games, the quiet protocols — they bent but didn't break. The Stack wrecked, and in the wreckage, new routes opened. The theater that once looked like omnipotence now looks like what it always was: a performance.
+
+        ~ meshwork_resilience += 15
+        ~ playvolution_score += 15
+        ~ legitimacy_theater -= 10
+
     - counter_stack_building >= 3:
         But the counter-stack held. The informal networks, the coded games, the quiet protocols — they bent but didn't break. The Stack wrecked, and in the wreckage, new routes opened.
 
@@ -795,6 +1095,12 @@ INCLUDE history.ink
         ~ entropiric_saturation += 10
         ~ public_fear += 15
         ~ meshwork_resilience -= 10
+    }
+
+    // Theater punctures weaken the repair phase
+    {
+    - theater_punctures >= 3:
+        But the punctures you made in the institutional theater meant that the repair phase — the moral laundering, the "reform," the rebuilding of legitimacy — was less convincing this time. People saw backstage. The cycle's repair mechanism is weakening.
     }
 
     -> chapter_transition

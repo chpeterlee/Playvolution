@@ -1,7 +1,9 @@
 // === PLAYVOLUTION: Game Logic & State Tracking ===
 // Present-day frame: AI user + AI agent
+// Foundational theory: states, institutions, meshworks, tempo advantage
 
 // --- Core Stats ---
+// (The six capabilities the player develops through AI interaction)
 VAR reading = 3
 VAR weaving = 2
 VAR play = 2
@@ -9,13 +11,21 @@ VAR craft = 2
 VAR nerve = 2
 VAR swarm = 1
 
-// --- World Model ---
+// --- The State Bundle ---
+// (Every era's extraction infrastructure reproduces these five elements)
 VAR surplus_routed_to_commons = 0
 VAR surplus_routed_to_extraction = 0
+VAR institutional_coherence = 30     // How capable institutions actually are
+VAR legitimacy_theater = 50          // How convincing institutional bluff is
+VAR theater_punctures = 0            // Times the player exposed the gap
+
+// --- Meshwork & Tempo ---
+// (The meshwork advantage: speed over mass)
 VAR meshwork_resilience = 10
-VAR institutional_legitimacy = 50
+VAR operational_tempo = 10           // Meshwork cycle speed vs institutional cycle speed
 VAR public_fear = 30
 VAR public_initiative = 20
+VAR adjacent_possible_capacity = 0   // Novel combinations the meshwork can incubate
 
 // --- Augmentation (your depth with the AI agent) ---
 VAR augmentation_depth = 0
@@ -49,8 +59,12 @@ VAR companion_smuggler = 0
 VAR companion_oracle = 0
 VAR companion_toolmaker = 0
 VAR companion_dreamer = 0
+VAR companions_recruited = 0
 
 // --- Faction Standing ---
+// Ledger = data/capability capture, Blade = enforcement/surveillance,
+// Veil = legitimacy/safety discourse, Commons = informal AI users,
+// Mesh = open-source/alternative AI communities, Playhouse = creative/experimental AI use
 VAR faction_ledger = 30
 VAR faction_blade = 10
 VAR faction_veil = 20
@@ -70,6 +84,12 @@ VAR session_count = 0
 VAR history_fragments_found = 0
 VAR agent_anomaly_count = 0
 VAR player_doubt = 0
+
+// --- Children's Culture ---
+// (The oldest and most resilient meshwork protocol)
+VAR child_culture_depth = 0          // How deeply protocols are embedded in children's culture
+VAR child_protocols_encoded = 0      // Number of coordination protocols in child-safe forms
+VAR child_culture_scrutiny = 0       // Governmental/institutional attention to child culture
 
 // --- Doctrines ---
 VAR doctrine_surplus_routing = false
