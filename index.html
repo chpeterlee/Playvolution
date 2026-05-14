@@ -233,25 +233,24 @@
         /* Scroll-down arrow */
         #scroll-down-hint {
             position: fixed;
-            bottom: 14px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 25;
-            font-size: 14px;
+            font-size: 12px;
             color: var(--text-faint);
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.4s ease;
-            animation: hintBounce 2s ease-in-out infinite;
+            transition: opacity 0.4s ease, bottom 0.3s ease;
             background: var(--bg-panel);
             border: 1px solid var(--border);
-            padding: 4px 12px;
-            border-radius: 12px;
+            padding: 3px 14px 5px;
+            border-radius: 10px;
             backdrop-filter: blur(8px);
         }
 
         #scroll-down-hint.visible {
             opacity: 0.7;
+            animation: hintBounce 2s ease-in-out infinite;
         }
 
         @keyframes hintBounce {
@@ -634,6 +633,14 @@
         const hasScroll = storyArea.scrollHeight > storyArea.clientHeight + 20;
         const atBottom = (storyArea.scrollHeight - storyArea.scrollTop - storyArea.clientHeight) < 30;
         const show = hasScroll && !atBottom;
+
+        // Position just above the choices pane
+        if (choicesArea.classList.contains('open')) {
+            scrollHint.style.bottom = (choicesArea.offsetHeight + 8) + 'px';
+        } else {
+            scrollHint.style.bottom = '14px';
+        }
+
         if (show) {
             scrollHint.classList.add('visible');
         } else {
@@ -812,7 +819,7 @@
     function showChoices() {
         choicesInner.innerHTML = '';
         choicesArea.classList.add('open');
-        scrollHint.classList.remove('visible');
+        updateScrollHint();
 
         story.currentChoices.forEach((choice, i) => {
             const card = document.createElement('div');
