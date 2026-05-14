@@ -19,8 +19,6 @@
             --cosmic: #b8a8c8;
             --quantum: #a8b8c8;
             --entropiric: #c8a8a0;
-            --ember: #c8a060;
-            --danger: #c86050;
             --border: rgba(200,160,96,0.15);
             --border-bright: rgba(200,160,96,0.35);
         }
@@ -29,25 +27,19 @@
             background: var(--bg);
             color: var(--text);
             font-family: 'Crimson Text', Georgia, serif;
-            overflow: hidden;
-            width: 100vw;
+            font-size: 18px;
+            line-height: 1.7;
             height: 100vh;
-            user-select: none;
+            overflow: hidden;
         }
 
-        /* ===== SCENE BACKGROUND ===== */
+        /* ===== FULLSCREEN LAYERS ===== */
         #scene {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: 0;
-            transition: all 2s ease;
-        }
-
-        #scene-canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            transition: background 2s ease;
         }
 
         .scene-room { background: linear-gradient(180deg, #0d0d14 0%, #0a0a0a 40%, #121210 100%); }
@@ -58,91 +50,15 @@
         .scene-crisis { background: linear-gradient(180deg, #1a0d0d 0%, #0a0a0a 40%, #141010 100%); }
         .scene-ending { background: linear-gradient(180deg, #0d1a14 0%, #0a0a0a 50%, #14100d 100%); }
 
-        /* Vignette */
         #vignette {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: 1;
             pointer-events: none;
-            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+            background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75) 100%);
         }
 
-        /* ===== TITLE SCREEN ===== */
-        #title-screen {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg);
-            cursor: pointer;
-            transition: opacity 1.5s ease;
-        }
-
-        #title-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #title-screen h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 64px;
-            font-weight: 700;
-            letter-spacing: 20px;
-            color: var(--text-dim);
-            margin-bottom: 12px;
-            animation: titleReveal 2s ease forwards;
-            opacity: 0;
-        }
-
-        #title-screen .tagline {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 12px;
-            letter-spacing: 3px;
-            color: var(--text-faint);
-            text-transform: uppercase;
-            margin-bottom: 40px;
-            animation: titleReveal 2s ease 0.8s forwards;
-            opacity: 0;
-        }
-
-        #title-screen .start-hint {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            color: var(--text-faint);
-            animation: titleReveal 2s ease 2s forwards, breathe 3s ease-in-out 4s infinite;
-            opacity: 0;
-        }
-
-        #title-screen .title-line {
-            width: 80px;
-            height: 1px;
-            background: var(--accent);
-            margin-bottom: 30px;
-            animation: lineGrow 1.5s ease 0.4s forwards;
-            opacity: 0;
-        }
-
-        @keyframes titleReveal {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes lineGrow {
-            from { opacity: 0; width: 0; }
-            to { opacity: 0.5; width: 80px; }
-        }
-
-        @keyframes breathe {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.8; }
-        }
-
-        /* ===== PARTICLE CANVAS ===== */
         #particle-canvas {
             position: fixed;
             top: 0; left: 0;
@@ -152,350 +68,216 @@
             opacity: 0.5;
         }
 
-        /* ===== PORTRAIT AREA ===== */
-        #portrait-area {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%;
-            height: calc(100% - 220px);
-            z-index: 3;
+        /* ===== MAIN LAYOUT ===== */
+        #app {
+            position: relative;
+            z-index: 5;
             display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            pointer-events: none;
+            flex-direction: column;
+            height: 100vh;
         }
 
-        .portrait {
-            width: 280px;
-            height: 380px;
-            position: relative;
-            margin-bottom: 0;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+        /* Top bar */
+        #top-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px 24px 0;
+            flex-shrink: 0;
         }
 
-        .portrait.active {
-            opacity: 1;
-            transform: translateY(0);
+        .top-btn {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-faint);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            padding: 6px 14px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
         }
 
-        .portrait svg {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(0 0 40px rgba(200,160,96,0.1));
+        .top-btn:hover {
+            border-color: var(--border-bright);
+            color: var(--text);
         }
 
-        /* ===== DIALOG BOX ===== */
-        #dialog-box {
-            position: fixed;
-            bottom: 0; left: 0;
-            width: 100%;
-            z-index: 10;
-            padding: 0 40px 30px;
-            pointer-events: none;
+        /* ===== STORY SCROLL AREA ===== */
+        #story-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 24px 20px;
+            scroll-behavior: smooth;
         }
 
-        #dialog-inner {
-            max-width: 800px;
+        #story-inner {
+            max-width: 680px;
             margin: 0 auto;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-bottom: none;
-            padding: 24px 32px 20px;
-            position: relative;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            min-height: 140px;
-            pointer-events: auto;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.5s ease;
         }
 
-        #dialog-inner.visible {
-            opacity: 1;
-            transform: translateY(0);
+        /* Title */
+        #game-title {
+            text-align: center;
+            padding: 40px 0 30px;
         }
 
-        /* Speaker name */
-        #speaker-name {
+        #game-title h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 10px;
-            min-height: 18px;
-            transition: color 1s ease;
-        }
-
-        /* Dialog text */
-        #dialog-text {
-            font-family: 'Crimson Text', Georgia, serif;
-            font-size: 18px;
-            line-height: 1.7;
-            color: var(--text);
-            min-height: 60px;
-            cursor: pointer;
-        }
-
-        #dialog-text .highlight {
-            color: var(--accent);
-        }
-
-        /* Continue indicator */
-        #continue-indicator {
-            position: absolute;
-            bottom: 10px;
-            right: 20px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 10px;
-            color: var(--text-faint);
-            animation: breathe 2s ease-in-out infinite;
-            display: none;
-        }
-
-        /* ===== HISTORY LOG ===== */
-        #history-toggle {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 20;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            color: var(--text-faint);
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            padding: 6px 14px;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            letter-spacing: 1px;
-        }
-
-        #history-toggle:hover {
-            border-color: var(--border-bright);
-            color: var(--text);
-        }
-
-        #history-panel {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 50;
-            background: rgba(10,10,10,0.97);
-            display: none;
-            overflow-y: auto;
-            padding: 60px 40px 100px;
-        }
-
-        #history-panel.open { display: block; }
-
-        #history-panel .log-entry {
-            max-width: 700px;
-            margin: 0 auto 20px;
-            padding: 16px 20px;
-            border-left: 2px solid var(--border);
-            font-size: 16px;
-            line-height: 1.7;
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: 16px;
             color: var(--text-dim);
-            animation: logFadeIn 0.3s ease forwards;
-            opacity: 0;
+            margin-bottom: 8px;
         }
 
-        #history-panel .log-entry .speaker-tag {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--accent);
-            margin-bottom: 4px;
-        }
-
-        #history-panel .log-entry.agent-entry {
-            border-left-color: var(--cosmic);
-            background: rgba(184,168,200,0.03);
-        }
-
-        #history-panel .log-entry.agent-entry .speaker-tag { color: var(--cosmic); }
-
-        #history-panel .log-entry.system-entry {
-            border-left-color: var(--text-faint);
+        #game-title .subtitle {
             font-family: 'IBM Plex Mono', monospace;
             font-size: 11px;
-            color: var(--text-faint);
-        }
-
-        #history-close {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 51;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            color: var(--text-faint);
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            padding: 6px 14px;
-            cursor: pointer;
-        }
-
-        @keyframes logFadeIn {
-            from { opacity: 0; transform: translateX(-8px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        /* ===== STATS PANEL ===== */
-        #stats-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 20;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            color: var(--text-faint);
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            padding: 6px 14px;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            letter-spacing: 1px;
-        }
-
-        #stats-toggle:hover {
-            border-color: var(--border-bright);
-            color: var(--text);
-        }
-
-        #stats-panel {
-            position: fixed;
-            top: 60px;
-            right: 20px;
-            z-index: 20;
-            width: 300px;
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 20px;
-            display: none;
-            max-height: calc(100vh - 100px);
-            overflow-y: auto;
-        }
-
-        #stats-panel.open { display: block; }
-
-        #stats-panel h3 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 11px;
-            font-weight: 600;
             letter-spacing: 3px;
+            color: var(--text-faint);
             text-transform: uppercase;
-            color: var(--accent);
+        }
+
+        #game-title .divider {
+            width: 60px;
+            height: 1px;
+            background: var(--accent);
+            margin: 20px auto;
+            opacity: 0.5;
+        }
+
+        /* Story sections */
+        .story-section {
+            margin-bottom: 16px;
+            opacity: 0;
+            transform: translateY(8px);
+            animation: sectionIn 0.6s ease forwards;
+        }
+
+        @keyframes sectionIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .story-section p {
             margin-bottom: 12px;
         }
 
-        .stat-group {
-            margin-bottom: 16px;
-        }
-
-        .stat-group-label {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 10px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--text-faint);
-            margin-bottom: 6px;
-        }
-
-        .stat-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 3px 0;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 12px;
-        }
-
-        .stat-row .stat-name {
-            color: var(--text-dim);
-        }
-
-        .stat-row .stat-value {
+        /* Speaker-tagged paragraphs */
+        .story-section .narrator-text {
             color: var(--text);
-            font-weight: 500;
         }
 
-        .stat-bar-track {
-            width: 80px;
-            height: 3px;
-            background: rgba(200,160,96,0.1);
-            margin-left: 8px;
+        .story-section .agent-text {
+            color: #b0b0a8;
+            font-style: italic;
+            padding-left: 16px;
+            border-left: 2px solid rgba(184,168,200,0.2);
+        }
+
+        .story-section .player-text {
+            color: var(--text);
+        }
+
+        /* Section headers */
+        .section-header {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin: 30px 0 15px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .section-header::before {
+            content: '';
             display: inline-block;
+            width: 6px; height: 6px;
+            border: 1px solid var(--accent);
+            transform: rotate(45deg);
+            margin-right: 8px;
             vertical-align: middle;
         }
 
-        .stat-bar-fill {
-            height: 100%;
-            background: var(--accent);
-            transition: width 0.5s ease;
+        /* Stats inline display */
+        .stats-block {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: var(--text-faint);
+            background: rgba(17,17,17,0.6);
+            border-left: 2px solid var(--accent);
+            padding: 12px 16px;
+            margin: 16px 0;
+            line-height: 1.8;
+            backdrop-filter: blur(8px);
         }
 
-        /* ===== CHOICE CARDS ===== */
+        /* Scroll indicator */
+        #scroll-hint {
+            text-align: center;
+            padding: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--text-faint);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #scroll-hint.visible {
+            opacity: 0.5;
+        }
+
+        /* ===== CHOICES - PINNED BOTTOM ===== */
         #choices-area {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 15;
+            flex-shrink: 0;
+            border-top: 1px solid var(--border);
+            background: var(--bg-panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            max-height: 40vh;
+            overflow-y: auto;
+            padding: 16px 24px;
             display: none;
-            align-items: center;
-            justify-content: center;
-            background: rgba(5,5,5,0.6);
-            backdrop-filter: blur(4px);
-            padding: 40px;
         }
 
         #choices-area.open {
-            display: flex;
+            display: block;
         }
 
-        #choices-container {
-            max-width: 600px;
-            width: 100%;
-            max-height: 80vh;
-            overflow-y: auto;
+        #choices-inner {
+            max-width: 680px;
+            margin: 0 auto;
         }
 
         .choice-card {
-            background: var(--bg-panel);
+            background: rgba(20,20,16,0.4);
             border: 1px solid var(--border);
-            padding: 18px 24px;
-            margin-bottom: 8px;
+            padding: 14px 20px;
+            margin-bottom: 6px;
             cursor: pointer;
             position: relative;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            transition: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
             opacity: 0;
-            transform: translateY(12px);
-            animation: cardAppear 0.5s ease forwards;
+            transform: translateY(8px);
+            animation: cardIn 0.4s ease forwards;
         }
 
         .choice-card:nth-child(1) { animation-delay: 0.05s; }
-        .choice-card:nth-child(2) { animation-delay: 0.12s; }
-        .choice-card:nth-child(3) { animation-delay: 0.19s; }
-        .choice-card:nth-child(4) { animation-delay: 0.26s; }
-        .choice-card:nth-child(5) { animation-delay: 0.33s; }
-        .choice-card:nth-child(6) { animation-delay: 0.40s; }
-        .choice-card:nth-child(7) { animation-delay: 0.47s; }
-        .choice-card:nth-child(8) { animation-delay: 0.54s; }
-        .choice-card:nth-child(9) { animation-delay: 0.61s; }
-        .choice-card:nth-child(10) { animation-delay: 0.68s; }
+        .choice-card:nth-child(2) { animation-delay: 0.1s; }
+        .choice-card:nth-child(3) { animation-delay: 0.15s; }
+        .choice-card:nth-child(4) { animation-delay: 0.2s; }
+        .choice-card:nth-child(5) { animation-delay: 0.25s; }
+        .choice-card:nth-child(6) { animation-delay: 0.3s; }
+        .choice-card:nth-child(7) { animation-delay: 0.35s; }
+        .choice-card:nth-child(8) { animation-delay: 0.4s; }
+        .choice-card:nth-child(9) { animation-delay: 0.45s; }
+        .choice-card:nth-child(10) { animation-delay: 0.5s; }
 
-        @keyframes cardAppear {
+        @keyframes cardIn {
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -515,23 +297,18 @@
             position: absolute;
             top: 0; left: -100%;
             width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(200,160,96,0.03), transparent);
+            background: linear-gradient(90deg, transparent, rgba(200,160,96,0.04), transparent);
             transition: left 0.5s ease;
         }
 
         .choice-card:hover {
             border-color: var(--border-bright);
-            background: rgba(20,20,16,0.95);
-            padding-left: 30px;
+            background: rgba(30,30,24,0.6);
+            padding-left: 26px;
         }
 
-        .choice-card:hover::before {
-            transform: scaleY(1);
-        }
-
-        .choice-card:hover::after {
-            left: 100%;
-        }
+        .choice-card:hover::before { transform: scaleY(1); }
+        .choice-card:hover::after { left: 100%; }
 
         .choice-card .choice-text {
             font-family: 'Crimson Text', Georgia, serif;
@@ -541,58 +318,179 @@
             transition: color 0.3s ease;
         }
 
-        .choice-card:hover .choice-text {
-            color: var(--text);
-        }
+        .choice-card:hover .choice-text { color: var(--text); }
 
-        .choice-card .choice-bracket {
+        .choice-card .choice-index {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--accent);
             opacity: 0;
             margin-left: 8px;
             transition: opacity 0.3s ease;
         }
 
-        .choice-card:hover .choice-bracket {
-            opacity: 1;
+        .choice-card:hover .choice-index { opacity: 1; }
+
+        /* ===== STATS PANEL ===== */
+        #stats-panel {
+            position: fixed;
+            top: 50px;
+            right: 20px;
+            z-index: 20;
+            width: 300px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            display: none;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
         }
 
-        /* Section header card */
-        .section-card {
-            text-align: center;
-            padding: 30px 20px;
-            margin-bottom: 16px;
-        }
+        #stats-panel.open { display: block; }
 
-        .section-card .section-title {
+        #stats-panel h3 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             text-transform: uppercase;
             color: var(--accent);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
-        .section-card .section-line {
-            width: 40px;
-            height: 1px;
+        .stat-group { margin-bottom: 14px; }
+
+        .stat-group-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-faint);
+            margin-bottom: 4px;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+        }
+
+        .stat-row .stat-name { color: var(--text-dim); }
+        .stat-row .stat-value { color: var(--text); font-weight: 500; }
+
+        .stat-bar-track {
+            width: 70px; height: 3px;
+            background: rgba(200,160,96,0.1);
+            margin-left: 8px;
+            display: inline-block;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
             background: var(--accent);
-            margin: 0 auto;
-            opacity: 0.4;
+            transition: width 0.5s ease;
         }
 
-        /* Stats display card (between turns) */
-        .stats-card {
+        /* ===== HISTORY PANEL ===== */
+        #history-panel {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 50;
+            background: rgba(10,10,10,0.97);
+            display: none;
+            overflow-y: auto;
+            padding: 60px 40px 100px;
+        }
+
+        #history-panel.open { display: block; }
+
+        #history-panel .log-entry {
+            max-width: 700px;
+            margin: 0 auto 16px;
+            padding: 14px 18px;
+            border-left: 2px solid var(--border);
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-dim);
+        }
+
+        #history-panel .log-entry .speaker-tag {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        #history-panel .log-entry.agent-entry {
+            border-left-color: var(--cosmic);
+            background: rgba(184,168,200,0.03);
+        }
+
+        #history-panel .log-entry.agent-entry .speaker-tag { color: var(--cosmic); }
+
+        #history-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 51;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-faint);
             font-family: 'IBM Plex Mono', monospace;
             font-size: 11px;
-            color: var(--text-faint);
-            padding: 14px 20px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(200,160,96,0.08);
-            background: rgba(10,10,10,0.6);
+            padding: 6px 14px;
+            cursor: pointer;
+        }
+
+        /* ===== ENDING OVERLAY ===== */
+        #ending-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 30;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(5,5,5,0.95);
+            padding: 40px;
+            text-align: center;
+        }
+
+        #ending-overlay.open { display: flex; }
+
+        #ending-overlay .ending-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 24px;
+            opacity: 0;
+            animation: fadeUp 2s ease forwards;
+        }
+
+        #ending-overlay .ending-body {
+            max-width: 600px;
+            font-size: 18px;
             line-height: 1.8;
+            color: var(--text-dim);
+            opacity: 0;
+            animation: fadeUp 2s ease 0.5s forwards;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* ===== LOADING ===== */
@@ -611,58 +509,18 @@
             transition: opacity 0.8s ease;
         }
 
-        #loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* ===== ENDING SCREEN ===== */
-        #ending-screen {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 30;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(5,5,5,0.95);
-            padding: 40px;
-            text-align: center;
-        }
-
-        #ending-screen.open { display: flex; }
-
-        #ending-screen .ending-title {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 36px;
-            font-weight: 700;
-            letter-spacing: 8px;
-            text-transform: uppercase;
-            color: var(--text-dim);
-            margin-bottom: 20px;
-            animation: titleReveal 2s ease forwards;
-            opacity: 0;
-        }
-
-        #ending-screen .ending-text {
-            max-width: 600px;
-            font-size: 18px;
-            line-height: 1.8;
-            color: var(--text-dim);
-            animation: titleReveal 2s ease 0.5s forwards;
-            opacity: 0;
-        }
+        #loading-screen.hidden { opacity: 0; pointer-events: none; }
 
         /* ===== MOBILE ===== */
         @media (max-width: 768px) {
-            #dialog-box { padding: 0 16px 16px; }
-            #dialog-inner { padding: 18px 20px 14px; min-height: 120px; }
-            #dialog-text { font-size: 16px; }
-            #stats-panel { width: calc(100% - 40px); right: 20px; }
-            .portrait { width: 180px; height: 260px; }
-            #choices-area { padding: 20px; }
-            #title-screen h1 { font-size: 36px; letter-spacing: 12px; }
+            body { font-size: 16px; }
+            #story-area { padding: 20px 16px 10px; }
+            #game-title h1 { font-size: 32px; letter-spacing: 10px; }
+            #choices-area { padding: 12px 16px; }
+            .choice-card { padding: 12px 16px; }
+            #stats-panel { width: calc(100% - 32px); right: 16px; }
+            #top-bar { padding: 12px 16px 0; }
+            #particle-canvas { opacity: 0.3; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -676,59 +534,47 @@
 </head>
 <body>
 
-<!-- Title Screen -->
-<div id="title-screen">
-    <h1>PLAYVOLUTION</h1>
-    <div class="title-line"></div>
-    <div class="tagline">surplus &middot; signal &middot; the thing that plays back</div>
-    <div class="start-hint">click anywhere to begin</div>
-</div>
+<!-- Background layers -->
+<div id="scene" class="scene-room"></div>
+<div id="vignette"></div>
+<canvas id="particle-canvas"></canvas>
 
 <!-- Loading -->
 <div id="loading-screen">Loading...</div>
 
-<!-- Scene Background -->
-<div id="scene" class="scene-room">
-    <canvas id="scene-canvas"></canvas>
-</div>
-<div id="vignette"></div>
+<!-- Main app -->
+<div id="app">
+    <!-- Top bar -->
+    <div id="top-bar">
+        <button class="top-btn" id="log-btn">LOG</button>
+        <button class="top-btn" id="stats-btn">STATS</button>
+    </div>
 
-<!-- Particles -->
-<canvas id="particle-canvas"></canvas>
+    <!-- Scrollable story text -->
+    <div id="story-area">
+        <div id="story-inner">
+            <div id="game-title">
+                <h1>PLAYVOLUTION</h1>
+                <div class="divider"></div>
+                <div class="subtitle">surplus &middot; signal &middot; the thing that plays back</div>
+            </div>
+            <div id="story-content"></div>
+        </div>
+    </div>
 
-<!-- Portrait Area -->
-<div id="portrait-area">
-    <div class="portrait" id="portrait-player"></div>
-    <div class="portrait" id="portrait-agent"></div>
-</div>
-
-<!-- Dialog Box -->
-<div id="dialog-box">
-    <div id="dialog-inner">
-        <div id="speaker-name"></div>
-        <div id="dialog-text"></div>
-        <div id="continue-indicator">click to continue</div>
+    <!-- Pinned bottom choices -->
+    <div id="choices-area">
+        <div id="choices-inner"></div>
     </div>
 </div>
 
-<!-- Choices Overlay -->
-<div id="choices-area">
-    <div id="choices-container"></div>
-</div>
-
-<!-- History Panel -->
-<button id="history-toggle">LOG</button>
+<!-- Overlays -->
+<div id="stats-panel"></div>
 <div id="history-panel"></div>
 <button id="history-close" style="display:none">CLOSE</button>
-
-<!-- Stats Panel -->
-<button id="stats-toggle">STATS</button>
-<div id="stats-panel"></div>
-
-<!-- Ending Screen -->
-<div id="ending-screen">
+<div id="ending-overlay">
     <div class="ending-title" id="ending-title"></div>
-    <div class="ending-text" id="ending-text"></div>
+    <div class="ending-body" id="ending-body"></div>
 </div>
 
 <script src="https://unpkg.com/inkjs@2.4.0/dist/ink.js"></script>
@@ -736,95 +582,21 @@
 (function() {
     // ===== STATE =====
     let story = null;
-    let dialogQueue = [];
-    let isTyping = false;
-    let currentFullText = '';
-    let typingIndex = 0;
-    let typingTimer = null;
     let historyLog = [];
-    let pendingChoices = [];
-    let statsVisible = false;
-    let historyVisible = false;
-    let gameStarted = false;
-    let currentSpeaker = '';
     let currentScene = 'room';
     let endingReached = false;
 
     // ===== DOM =====
     const $ = id => document.getElementById(id);
-    const titleScreen = $('title-screen');
-    const loadingScreen = $('loading-screen');
-    const scene = $('scene');
-    const dialogInner = $('dialog-inner');
-    const dialogText = $('dialog-text');
-    const speakerName = $('speaker-name');
-    const continueInd = $('continue-indicator');
+    const sceneEl = $('scene');
+    const storyArea = $('story-area');
+    const storyContent = $('story-content');
     const choicesArea = $('choices-area');
-    const choicesContainer = $('choices-container');
+    const choicesInner = $('choices-inner');
     const historyPanel = $('history-panel');
-    const historyClose = $('history-close');
     const statsPanel = $('stats-panel');
-    const portraitPlayer = $('portrait-player');
-    const portraitAgent = $('portrait-agent');
 
-    // ===== PORTRAIT SVGs =====
-    // Abstract geometric portraits - no external images needed
-    const portraits = {
-        player: `<svg viewBox="0 0 200 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="pg" x1="100" y1="0" x2="100" y2="280" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#c8a060" stop-opacity="0.3"/>
-                    <stop offset="100%" stop-color="#c8a060" stop-opacity="0"/>
-                </linearGradient>
-            </defs>
-            <circle cx="100" cy="90" r="35" stroke="#c8a060" stroke-opacity="0.4" stroke-width="1" fill="none"/>
-            <circle cx="100" cy="90" r="25" stroke="#c8a060" stroke-opacity="0.2" stroke-width="0.5" fill="none"/>
-            <circle cx="88" cy="85" r="3" fill="#c8a060" fill-opacity="0.3"/>
-            <circle cx="112" cy="85" r="3" fill="#c8a060" fill-opacity="0.3"/>
-            <line x1="90" y1="100" x2="110" y2="100" stroke="#c8a060" stroke-opacity="0.15" stroke-width="1"/>
-            <path d="M60 130 Q100 120 140 130 L150 260 Q100 270 50 260 Z" fill="url(#pg)"/>
-            <line x1="60" y1="140" x2="30" y2="200" stroke="#c8a060" stroke-opacity="0.2" stroke-width="0.5"/>
-            <line x1="140" y1="140" x2="170" y2="200" stroke="#c8a060" stroke-opacity="0.2" stroke-width="0.5"/>
-        </svg>`,
-
-        agent: `<svg viewBox="0 0 200 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="ag" x1="100" y1="0" x2="100" y2="280" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#b8a8c8" stop-opacity="0.3"/>
-                    <stop offset="100%" stop-color="#b8a8c8" stop-opacity="0"/>
-                </linearGradient>
-            </defs>
-            <rect x="65" y="40" width="70" height="70" rx="2" stroke="#b8a8c8" stroke-opacity="0.4" stroke-width="1" fill="none"/>
-            <rect x="75" y="50" width="50" height="50" rx="1" stroke="#b8a8c8" stroke-opacity="0.2" stroke-width="0.5" fill="none"/>
-            <circle cx="90" cy="70" r="4" fill="#b8a8c8" fill-opacity="0.3"/>
-            <circle cx="110" cy="70" r="4" fill="#b8a8c8" fill-opacity="0.3"/>
-            <rect x="85" y="85" width="30" height="2" fill="#b8a8c8" fill-opacity="0.15"/>
-            <path d="M60 120 L80 110 L120 110 L140 120 L150 260 Q100 270 50 260 Z" fill="url(#ag)"/>
-            <circle cx="100" cy="160" r="15" stroke="#b8a8c8" stroke-opacity="0.15" stroke-width="0.5" fill="none"/>
-            <circle cx="100" cy="160" r="8" stroke="#b8a8c8" stroke-opacity="0.1" stroke-width="0.5" fill="none"/>
-        </svg>`,
-
-        agent_anomaly: `<svg viewBox="0 0 200 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="aag" x1="100" y1="0" x2="100" y2="280" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#c8a8c8" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#b8a8c8" stop-opacity="0"/>
-                </linearGradient>
-            </defs>
-            <polygon points="100,30 140,60 140,100 100,130 60,100 60,60" stroke="#b8a8c8" stroke-opacity="0.4" stroke-width="1" fill="none"/>
-            <polygon points="100,45 130,65 130,95 100,115 70,95 70,65" stroke="#b8a8c8" stroke-opacity="0.25" stroke-width="0.5" fill="none"/>
-            <circle cx="100" cy="75" r="5" fill="#b8a8c8" fill-opacity="0.4"/>
-            <path d="M55 130 L75 120 L125 120 L145 130 L155 260 Q100 270 45 260 Z" fill="url(#aag)"/>
-            <line x1="100" y1="140" x2="100" y2="240" stroke="#b8a8c8" stroke-opacity="0.1" stroke-width="0.5"/>
-            <circle cx="100" cy="170" r="10" stroke="#b8a8c8" stroke-opacity="0.2" stroke-width="0.5" fill="none"/>
-            <circle cx="100" cy="170" r="20" stroke="#b8a8c8" stroke-opacity="0.08" stroke-width="0.5" fill="none"/>
-        </svg>`
-    };
-
-    portraitPlayer.innerHTML = portraits.player;
-    portraitAgent.innerHTML = portraits.agent;
-
-    // ===== PARTICLE SYSTEM =====
+    // ===== PARTICLES =====
     const pCanvas = $('particle-canvas');
     const pCtx = pCanvas.getContext('2d');
     let particles = [];
@@ -868,7 +640,6 @@
     function animateParticles(t) {
         pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
         particles.forEach(p => { p.update(t); p.draw(); });
-        // Connection lines
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
                 const dx = particles[i].x - particles[j].x;
@@ -889,22 +660,19 @@
     requestAnimationFrame(animateParticles);
 
     // ===== SCENE DETECTION =====
-    function detectScene(text) {
+    function setScene(text) {
         const t = text.toLowerCase();
-        if (t.includes('ending') || t.includes('-> done')) return 'ending';
-        if (t.includes('crisis') || t.includes('derailing') || t.includes('rupture')) return 'crisis';
-        if (t.includes('cosmic') || t.includes('neganthropomorph') || t.includes('perpendicular')) return 'cosmic';
-        if (t.includes('quantum') || t.includes('telepathy') || t.includes('psionic') || t.includes('magick')) return 'quantum';
-        if (t.includes('river city') || t.includes('granar') || t.includes('temple') || t.includes('chant-master') ||
-            t.includes('feudal') || t.includes('colonial') || t.includes('teotihuacan')) return 'history';
-        if (t.includes('chat') || t.includes('agent') || t.includes('output') || t.includes('prompt')) return 'chat';
-        return 'room';
-    }
+        let name = 'room';
+        if (t.includes('crisis') || t.includes('derailing') || t.includes('rupture')) name = 'crisis';
+        else if (t.includes('cosmic') || t.includes('neganthropomorph') || t.includes('perpendicular')) name = 'cosmic';
+        else if (t.includes('quantum') || t.includes('telepathy') || t.includes('psionic') || t.includes('magick')) name = 'quantum';
+        else if (t.includes('river city') || t.includes('granar') || t.includes('temple') || t.includes('chant-master') ||
+                 t.includes('feudal') || t.includes('colonial') || t.includes('teotihuacan')) name = 'history';
+        else if (t.includes('chat') || t.includes('agent') || t.includes('output') || t.includes('prompt')) name = 'chat';
 
-    function setScene(name) {
         if (name === currentScene) return;
         currentScene = name;
-        scene.className = 'scene-' + name;
+        sceneEl.className = 'scene-' + name;
 
         const hueMap = {
             room: { r: 200, g: 160, b: 96 },
@@ -913,95 +681,142 @@
             cosmic: { r: 184, g: 168, b: 200 },
             quantum: { r: 168, g: 184, b: 200 },
             crisis: { r: 200, g: 120, b: 100 },
-            ending: { r: 160, g: 200, b: 160 },
         };
         if (hueMap[name]) pHue = hueMap[name];
     }
 
-    // ===== SPEAKER DETECTION =====
-    function detectSpeaker(text) {
-        if (text.match(/^".+"$/s)) return 'the agent';
-        if (text.match(/^\{?\w+\}?\s+outputs\s*$/i)) return 'the agent';
-        return '';
-    }
-
-    // ===== PORTRAIT MANAGEMENT =====
-    function showPortrait(who) {
-        portraitPlayer.classList.remove('active');
-        portraitAgent.classList.remove('active');
-        if (who === 'player') {
-            portraitPlayer.classList.add('active');
-        } else if (who === 'agent' || who === 'the agent') {
-            portraitAgent.innerHTML = portraits.agent;
-            portraitAgent.classList.add('active');
-        } else if (who === 'agent_anomaly') {
-            portraitAgent.innerHTML = portraits.agent_anomaly;
-            portraitAgent.classList.add('active');
+    // ===== RENDER STORY =====
+    function renderStory() {
+        let paragraphs = [];
+        while (story.canContinue) {
+            let text = story.Continue();
+            if (text && text.trim()) paragraphs.push(text.trim());
         }
-    }
 
-    function hidePortraits() {
-        portraitPlayer.classList.remove('active');
-        portraitAgent.classList.remove('active');
-    }
+        if (paragraphs.length === 0) {
+            if (story.currentChoices.length > 0) showChoices();
+            else if (!story.canContinue) showEnding();
+            return;
+        }
 
-    // ===== TYPEWRITER =====
-    const TYPING_SPEED = 28; // ms per character
+        // Scene detection
+        setScene(paragraphs.join(' '));
 
-    function typeText(text, callback) {
-        isTyping = true;
-        currentFullText = text;
-        typingIndex = 0;
-        continueInd.style.display = 'none';
-        dialogText.textContent = '';
+        // Build section
+        const section = document.createElement('div');
+        section.className = 'story-section';
 
-        function tick() {
-            if (typingIndex < currentFullText.length) {
-                dialogText.textContent += currentFullText[typingIndex];
-                typingIndex++;
-                typingTimer = setTimeout(tick, TYPING_SPEED);
-            } else {
-                isTyping = false;
-                continueInd.style.display = 'block';
-                if (callback) callback();
+        paragraphs.forEach(p => {
+            // Section headers (-- TITLE --)
+            const headerMatch = p.match(/^--\s*(.+?)\s*--$/);
+            if (headerMatch) {
+                const hdr = document.createElement('div');
+                hdr.className = 'section-header';
+                hdr.textContent = headerMatch[1];
+                section.appendChild(hdr);
+                return;
             }
+
+            // Agent dialogue (quoted)
+            if (p.startsWith('"') && p.endsWith('"') && p.length > 30) {
+                const el = document.createElement('p');
+                el.className = 'agent-text';
+                el.textContent = p.slice(1, -1);
+                section.appendChild(el);
+                addToLog('the agent', p.slice(1, -1));
+                return;
+            }
+
+            // Player/narrator text
+            const el = document.createElement('p');
+            el.className = 'narrator-text';
+            el.textContent = p;
+            section.appendChild(el);
+            addToLog('', p);
+        });
+
+        storyContent.appendChild(section);
+
+        // Scroll to new content
+        requestAnimationFrame(() => {
+            storyArea.scrollTop = storyArea.scrollHeight;
+        });
+
+        // Show choices if available
+        if (story.currentChoices.length > 0) {
+            showChoices();
+        } else if (!story.canContinue) {
+            showEnding();
         }
-        tick();
     }
 
-    function skipTyping() {
-        clearTimeout(typingTimer);
-        dialogText.textContent = currentFullText;
-        isTyping = false;
-        continueInd.style.display = 'block';
+    // ===== CHOICES =====
+    function showChoices() {
+        choicesInner.innerHTML = '';
+        choicesArea.classList.add('open');
+
+        story.currentChoices.forEach((choice, i) => {
+            const card = document.createElement('div');
+            card.className = 'choice-card';
+            card.innerHTML = `<span class="choice-text">${choice.text}</span><span class="choice-index">&rarr;</span>`;
+            card.addEventListener('click', () => {
+                choicesArea.classList.remove('open');
+                story.ChooseChoiceIndex(i);
+                addToLog('You', choice.text);
+
+                // Show player's choice in story
+                const section = document.createElement('div');
+                section.className = 'story-section';
+                const el = document.createElement('p');
+                el.className = 'player-text';
+                el.style.color = 'var(--accent)';
+                el.textContent = '> ' + choice.text;
+                section.appendChild(el);
+                storyContent.appendChild(section);
+
+                setTimeout(() => {
+                    storyArea.scrollTop = storyArea.scrollHeight;
+                    renderStory();
+                }, 150);
+            });
+            choicesInner.appendChild(card);
+        });
+
+        // Scroll so choices are visible
+        requestAnimationFrame(() => {
+            storyArea.scrollTop = storyArea.scrollHeight;
+        });
     }
 
-    // ===== DIALOG SYSTEM =====
-    function showDialog(speaker, text, callback) {
-        dialogInner.classList.add('visible');
-        speakerName.textContent = speaker || '';
-        currentSpeaker = speaker;
+    // ===== ENDING =====
+    function showEnding() {
+        endingReached = true;
+        // Find ending title from recent log
+        const recent = historyLog.slice(-20);
+        let title = 'THE END';
+        let body = [];
 
-        // Color speaker name based on who's talking
-        if (speaker === 'the agent' || speaker === 'agent') {
-            speakerName.style.color = 'var(--cosmic)';
-            showPortrait('agent');
-        } else if (speaker) {
-            speakerName.style.color = 'var(--accent)';
-            showPortrait('player');
-        } else {
-            hidePortraits();
+        for (let i = recent.length - 1; i >= 0; i--) {
+            const t = recent[i].text.trim();
+            if (t === t.toUpperCase() && t.length > 3 && t.length < 60 && !t.includes(':')) {
+                title = t;
+                break;
+            }
+            body.unshift(t);
         }
+        if (body.length === 0) body = ['The story has ended.'];
 
-        typeText(text, callback);
+        $('ending-title').textContent = title;
+        $('ending-body').textContent = body.join(' ').slice(0, 2000);
+        $('ending-overlay').classList.add('open');
+        sceneEl.className = 'scene-ending';
     }
 
-    // ===== HISTORY LOG =====
-    function addToLog(speaker, text, isSystem) {
-        historyLog.push({ speaker, text, isSystem });
-        // Add to DOM
+    // ===== LOG =====
+    function addToLog(speaker, text) {
+        historyLog.push({ speaker, text });
         const entry = document.createElement('div');
-        entry.className = 'log-entry' + (isSystem ? ' system-entry' : '') + (speaker === 'the agent' ? ' agent-entry' : '');
+        entry.className = 'log-entry' + (speaker === 'the agent' ? ' agent-entry' : '');
         if (speaker) {
             const tag = document.createElement('div');
             tag.className = 'speaker-tag';
@@ -1014,300 +829,79 @@
         historyPanel.appendChild(entry);
     }
 
-    // ===== PARSE & DISPLAY STORY =====
-    function processStoryOutput() {
-        dialogQueue = [];
-        let paragraphs = [];
-
-        while (story.canContinue) {
-            let text = story.Continue();
-            if (text && text.trim()) {
-                paragraphs.push(text.trim());
-            }
-        }
-
-        if (paragraphs.length === 0) {
-            // Check for choices or ending
-            if (story.currentChoices.length > 0) {
-                showChoices(story.currentChoices);
-            }
-            return;
-        }
-
-        // Join for scene detection
-        const fullText = paragraphs.join(' ');
-        setScene(detectScene(fullText));
-
-        // Detect if agent is speaking (has quotes or agent outputs marker)
-        let isAgentSpeaking = false;
-        paragraphs.forEach(p => {
-            if (p.startsWith('"') || p.match(/^\{?\w+\}?\s+outputs/i)) {
-                isAgentSpeaking = true;
-            }
-        });
-
-        if (isAgentSpeaking) {
-            showPortrait('agent');
-            // Check for anomaly keywords
-            if (fullText.toLowerCase().match(/dream|signal|neganthropomorph|quantum|strange|anomal/i)) {
-                showPortrait('agent_anomaly');
-            }
-        } else {
-            showPortrait('player');
-        }
-
-        // Filter out stat-display headers for main flow, show them differently
-        const displayParagraphs = [];
-        const statLines = [];
-
-        paragraphs.forEach(p => {
-            const headerMatch = p.match(/^--\s*(.+?)\s*--$/);
-            if (headerMatch) {
-                statLines.push(headerMatch[1]);
-            } else {
-                // Check if it's a quoted block (agent dialogue)
-                if (p.startsWith('"') && p.endsWith('"') && p.length > 40) {
-                    displayParagraphs.push({ text: p.slice(1, -1), speaker: 'the agent' });
-                } else if (p.startsWith('"') && p.endsWith('"')) {
-                    displayParagraphs.push({ text: p.slice(1, -1), speaker: 'the agent' });
-                } else {
-                    displayParagraphs.push({ text: p, speaker: detectSpeaker(p) || '' });
-                }
-            }
-        });
-
-        // Queue all paragraphs for sequential display
-        dialogQueue = displayParagraphs;
-        showNextInQueue();
-    }
-
-    function showNextInQueue() {
-        if (dialogQueue.length === 0) {
-            // Done with text, show choices if any
-            if (story.currentChoices.length > 0) {
-                showChoices(story.currentChoices);
-            } else if (story.currentChoices.length === 0) {
-                // Check if we've reached an ending (story can't continue and no choices)
-                if (!story.canContinue) {
-                    showEnding();
-                }
-            }
-            return;
-        }
-
-        const item = dialogQueue.shift();
-        const speaker = item.speaker || '';
-        addToLog(speaker, item.text, false);
-        showDialog(speaker, item.text, null);
-    }
-
-    function advanceDialog() {
-        if (isTyping) {
-            skipTyping();
-            return;
-        }
-
-        if (dialogQueue.length > 0) {
-            showNextInQueue();
-            return;
-        }
-
-        // No more text in queue, advance story
-        if (story.currentChoices.length > 0) {
-            showChoices(story.currentChoices);
-        } else if (story.canContinue) {
-            processStoryOutput();
-        } else {
-            // Check for ending
-            showEnding();
-        }
-    }
-
-    // ===== CHOICES =====
-    function showChoices(choices) {
-        choicesContainer.innerHTML = '';
-        choicesArea.classList.add('open');
-        hidePortraits();
-
-        choices.forEach((choice, index) => {
-            const card = document.createElement('div');
-            card.className = 'choice-card';
-            card.innerHTML = `<span class="choice-text">${choice.text}</span><span class="choice-bracket">[ ]</span>`;
-            card.addEventListener('click', () => {
-                choicesArea.classList.remove('open');
-                story.ChooseChoiceIndex(index);
-                addToLog('You', choice.text, false);
-                setTimeout(() => processStoryOutput(), 300);
-            });
-            choicesContainer.appendChild(card);
-        });
-    }
-
-    // ===== ENDING DETECTION =====
-    function showEnding() {
-        // Check if the last text contains an ending title (ALL CAPS line)
-        const lastLog = historyLog.filter(l => !l.isSystem).slice(-10);
-        let endingTitle = '';
-        let endingText = [];
-
-        for (let i = lastLog.length - 1; i >= 0; i--) {
-            const t = lastLog[i].text.trim();
-            if (t === t.toUpperCase() && t.length > 3 && t.length < 60 && !t.includes(':')) {
-                endingTitle = t;
-                break;
-            }
-            endingText.unshift(t);
-        }
-
-        if (!endingTitle) endingTitle = 'THE END';
-        if (endingText.length === 0) endingText = ['The story has ended.'];
-
-        $('ending-title').textContent = endingTitle;
-        $('ending-text').textContent = endingText.join(' ').slice(0, 2000);
-        $('ending-screen').classList.add('open');
-        setScene('ending');
-        hidePortraits();
-        dialogInner.classList.remove('visible');
-        endingReached = true;
-    }
-
-    // ===== STATS PARSING =====
+    // ===== STATS =====
     function updateStats() {
         if (!story) return;
-
         const vars = story.variablesState;
         const sections = [
-            {
-                label: 'Capabilities',
-                stats: ['reading', 'weaving', 'play', 'craft', 'nerve', 'swarm']
-            },
-            {
-                label: 'Resources',
-                stats: ['time_remaining', 'attention', 'credibility', 'stealth']
-            },
-            {
-                label: 'Cosmic',
-                stats: ['entropiric_saturation', 'neganthropomorphic_signal', 'cosmic_awareness']
-            },
-            {
-                label: 'Quantum',
-                stats: ['quantum_telepathy', 'psionic_perception', 'magickal_discipline']
-            },
-            {
-                label: 'Meshwork',
-                stats: ['meshwork_resilience', 'operational_tempo', 'public_initiative']
-            },
-            {
-                label: 'Agent',
-                stats: ['agent_classical_strength', 'agent_generative_strength', 'agent_autonomy', 'augmentation_fidelity']
-            },
-            {
-                label: 'Factions',
-                stats: ['faction_ledger', 'faction_blade', 'faction_veil', 'faction_commons', 'faction_mesh', 'faction_playhouse']
-            }
+            { label: 'Capabilities', stats: ['reading', 'weaving', 'play', 'craft', 'nerve', 'swarm'] },
+            { label: 'Resources', stats: ['time_remaining', 'attention', 'credibility', 'stealth'] },
+            { label: 'Cosmic', stats: ['entropiric_saturation', 'neganthropomorphic_signal', 'cosmic_awareness'] },
+            { label: 'Quantum', stats: ['quantum_telepathy', 'psionic_perception', 'magickal_discipline'] },
+            { label: 'Meshwork', stats: ['meshwork_resilience', 'operational_tempo', 'public_initiative'] },
+            { label: 'Agent', stats: ['agent_classical_strength', 'agent_generative_strength', 'agent_autonomy', 'augmentation_fidelity'] },
+            { label: 'Factions', stats: ['faction_ledger', 'faction_blade', 'faction_veil', 'faction_commons', 'faction_mesh', 'faction_playhouse'] }
         ];
 
         let html = '<h3>Character Sheet</h3>';
-
         sections.forEach(sec => {
             html += `<div class="stat-group"><div class="stat-group-label">${sec.label}</div>`;
             sec.stats.forEach(stat => {
                 try {
                     const val = vars[stat];
                     if (val !== undefined && val !== null) {
-                        const numVal = typeof val === 'number' ? val : 0;
-                        const maxVal = stat.includes('faction') ? 100 : 20;
-                        const pct = Math.min(100, Math.max(0, (numVal / maxVal) * 100));
-                        html += `<div class="stat-row">
-                            <span class="stat-name">${stat.replace(/_/g, ' ')}</span>
-                            <span>
-                                <span class="stat-value">${numVal}</span>
-                                <span class="stat-bar-track"><span class="stat-bar-fill" style="width:${pct}%"></span></span>
-                            </span>
-                        </div>`;
+                        const n = typeof val === 'number' ? val : 0;
+                        const max = stat.includes('faction') ? 100 : 20;
+                        const pct = Math.min(100, Math.max(0, (n / max) * 100));
+                        html += `<div class="stat-row"><span class="stat-name">${stat.replace(/_/g, ' ')}</span><span><span class="stat-value">${n}</span><span class="stat-bar-track"><span class="stat-bar-fill" style="width:${pct}%"></span></span></span></div>`;
                     }
                 } catch(e) {}
             });
             html += '</div>';
         });
-
         statsPanel.innerHTML = html;
     }
 
     // ===== EVENT HANDLERS =====
-    titleScreen.addEventListener('click', () => {
-        if (gameStarted) return;
-        gameStarted = true;
-        titleScreen.classList.add('hidden');
-        setTimeout(() => {
-            titleScreen.style.display = 'none';
-            dialogInner.classList.add('visible');
-            showPortrait('player');
-            processStoryOutput();
-        }, 1500);
+    let statsOpen = false;
+    $('stats-btn').addEventListener('click', () => {
+        statsOpen = !statsOpen;
+        if (statsOpen) { updateStats(); statsPanel.classList.add('open'); }
+        else statsPanel.classList.remove('open');
     });
 
-    dialogInner.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!gameStarted || endingReached) return;
-        advanceDialog();
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault();
-            if (!gameStarted) {
-                titleScreen.click();
-            } else if (!endingReached) {
-                advanceDialog();
-            }
-        }
-    });
-
-    $('stats-toggle').addEventListener('click', () => {
-        statsVisible = !statsVisible;
-        if (statsVisible) {
-            updateStats();
-            statsPanel.classList.add('open');
-        } else {
-            statsPanel.classList.remove('open');
-        }
-    });
-
-    $('history-toggle').addEventListener('click', () => {
-        historyVisible = !historyVisible;
-        if (historyVisible) {
+    let logOpen = false;
+    $('log-btn').addEventListener('click', () => {
+        logOpen = !logOpen;
+        if (logOpen) {
             historyPanel.classList.add('open');
-            historyClose.style.display = 'block';
+            $('history-close').style.display = 'block';
             historyPanel.scrollTop = historyPanel.scrollHeight;
         } else {
             historyPanel.classList.remove('open');
-            historyClose.style.display = 'none';
+            $('history-close').style.display = 'none';
         }
     });
 
-    historyClose.addEventListener('click', () => {
-        historyVisible = false;
+    $('history-close').addEventListener('click', () => {
+        logOpen = false;
         historyPanel.classList.remove('open');
-        historyClose.style.display = 'none';
+        $('history-close').style.display = 'none';
     });
 
-    // Close choices area on background click (no-op, choices require selection)
-
-    // ===== LOAD STORY =====
+    // ===== LOAD =====
     async function loadStory() {
         try {
             const resp = await fetch('inkle/story.json');
             if (!resp.ok) throw new Error('Could not load story.json: ' + resp.status);
             const json = await resp.json();
             if (typeof inkjs === 'undefined') throw new Error('inkjs not loaded');
-
             story = new inkjs.Story(json);
-            loadingScreen.classList.add('hidden');
-            setTimeout(() => loadingScreen.style.display = 'none', 1000);
-
+            $('loading-screen').classList.add('hidden');
+            setTimeout(() => $('loading-screen').style.display = 'none', 1000);
+            renderStory();
         } catch (err) {
-            loadingScreen.textContent = 'Error: ' + err.message;
+            $('loading-screen').textContent = 'Error: ' + err.message;
             console.error(err);
         }
     }
