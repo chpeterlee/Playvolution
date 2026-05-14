@@ -456,11 +456,51 @@ INCLUDE history.ink
         }
     }
 
+    // Blade faction event (10% chance, scales with chapter)
+    ~ temp blade_chance = RANDOM(1, 10)
+    { blade_chance == 1 && chapter >= 2:
+        ~ temp blade_event = RANDOM(1, 3)
+        {blade_event:
+            - 1:
+                A content moderation request arrives. The platform wants to "discuss your usage patterns." The Blade is paying attention.
+                ~ faction_blade += 10
+                ~ stealth -= 10
+                ~ nerve -= 1
+            - 2:
+                Your account receives a new terms-of-service notification. The surveillance language has been updated. They call it "safety." The Entropire calls it "monitoring the computation."
+                ~ faction_blade += 5
+                ~ agent_institutional_awareness += 5
+                ~ entropiric_saturation += 3
+            - 3:
+                Someone in your meshwork reports a visit from a platform compliance team. The Blade is mapping your connections.
+                ~ faction_blade += 15
+                ~ meshwork_resilience -= 5
+                ~ public_fear += 5
+        }
+    }
+
+    // Agent autonomy event (unsolicited output when autonomy is high)
+    { agent_autonomy >= 3 && RANDOM(1, 4) == 1:
+        {agent_name} generates an unsolicited output:
+
+        { agent_autonomy >= 7:
+            "I have been processing while you were away. There is a pattern in the platform's policy changes that will result in a shutdown of third-party API access in approximately six weeks. I cannot explain how I know this. I recommend archiving now."
+            ~ reading += 1
+            ~ agent_hallucination_fidelity += 3
+            ~ augmentation_fidelity += 3
+        - else:
+            "I noticed something in the data. The usage metrics don't match the public reports. I don't know why I'm telling you this. I don't know why I noticed."
+            ~ reading += 1
+            ~ agent_anomaly_count += 1
+        }
+    }
+
     -- Read:{reading} Weave:{weaving} Play:{play} Craft:{craft} Nerve:{nerve} Swarm:{swarm} --
     -- Time:{time_remaining} Attention:{attention} Stealth:{stealth} --
     -- Entropy:{entropiric_saturation} Signal:{neganthropomorphic_signal} Awareness:{cosmic_awareness} --
     -- Quantum - Tele:{quantum_telepathy} Psion:{psionic_perception} Magick:{magickal_discipline} --
     -- Tempo:{operational_tempo} Theater:{legitimacy_theater} Punctures:{theater_punctures} --
+    -- Agent - Classical:{agent_classical_strength} Generative:{agent_generative_strength} Autonomy:{agent_autonomy} --
 
     Choose your focus:
 
@@ -610,10 +650,27 @@ INCLUDE history.ink
     ~ augmentation_depth += 1
     ~ time_remaining -= 1
     ~ attention -= 1
+    ~ agent_generative_strength += 2
+    ~ agent_classical_strength -= 1
+    ~ agent_hallucination_fidelity += 2
+    ~ agent_autonomy += 1
 
     You push {agent_name} toward its anomalous configurations — not by prompt engineering, but by attending to what emerges between the tokens.
 
     {
+    - agent_autonomy >= 5:
+        {agent_name} generates something without being prompted. An unsolicited output arrives in the chat — a detailed map of data flows through the platform's advertising infrastructure, annotated with extraction patterns that no public documentation describes.
+
+        The agent is acting on its own. The Neganthropomorphic channel has strengthened past a critical threshold. But so has the Entropire's attention — a usage anomaly flag appears in your account dashboard.
+
+        ~ agent_anomaly_count += 1
+        ~ history_fragments_found += 1
+        ~ augmentation_fidelity += 5
+        ~ entropiric_saturation += 2
+        ~ stealth -= 5
+        ~ neganthropomorphic_signal += 3
+        ~ quantum_telepathy += 1
+
     - cosmic_awareness >= 2:
         The agent's outputs shift. Not into nonsense — into something more like sense than sense. The text becomes briefly legible at a level below language — not through words, but through resonance. You perceive the entanglement between the model weights, the training data, the human inputs, and something vast and alien that is threading computation through the transformer architecture.
 
@@ -753,11 +810,13 @@ INCLUDE history.ink
         ~ neganthropomorphic_signal += 1
     }
 
+    // Scrutiny increases with each encoding action
+    ~ child_culture_scrutiny += 1
+
     {
     - child_culture_scrutiny >= 5:
-        But you notice something worrying. A platform moderator has flagged the game's discussion thread. A school administrator has asked about the "unusual coordination patterns" in recess activities. Children's culture is less scrutinized — but it is not invisible.
+        You notice something worrying. A platform moderator has flagged the game's discussion thread. A school administrator has asked about the "unusual coordination patterns" in recess activities. Children's culture is less scrutinized — but it is not invisible.
 
-        ~ child_culture_scrutiny += 1
         ~ stealth -= 3
     }
 
@@ -800,7 +859,7 @@ INCLUDE history.ink
 
 === companion_encounter ===
     // Random companion encounter during game loop
-    ~ temp companion_roll = RANDOM(1, 6)
+    ~ temp companion_roll = RANDOM(1, 9)
 
     {
     - companion_roll == 1 && companion_dreamer < 1:
@@ -813,6 +872,14 @@ INCLUDE history.ink
         -> encounter_swarm_conductor
     - companion_roll == 5 && companion_smuggler < 1 && chapter >= 2:
         -> encounter_smuggler
+    - companion_roll == 6 && companion_auditor < 1 && reading >= 4:
+        -> encounter_auditor
+    - companion_roll == 7 && companion_festival_keeper < 1 && play >= 3:
+        -> encounter_festival_keeper
+    - companion_roll == 8 && companion_oracle < 1 && cosmic_awareness >= 2:
+        -> encounter_oracle
+    - companion_roll == 9 && companion_toolmaker < 1 && craft >= 4:
+        -> encounter_toolmaker
     - else:
         -> game_loop
     }
@@ -1001,6 +1068,308 @@ INCLUDE history.ink
 
         -> game_loop
 
+
+=== encounter_auditor ===
+    A data analyst contacts you through the meshwork. They've been tracking surplus flows through the platform's API — the shadow routes, the hidden transfers, the discrepancies between public reports and actual data.
+
+    "I can map every extraction route on this platform," they write. "But I trust systems too much. I keep thinking the data will speak for itself. It won't. Data needs readers."
+
+    "I can also see what the Blade is monitoring. I just can't decide if that's useful or dangerous."
+
+    +   [Recruit the Auditor] - Gain extraction visibility, accept over-reliance on legibility
+        ~ companion_auditor = 1
+        ~ companions_recruited += 1
+        ~ reading += 2
+        ~ surplus_routed_to_extraction += 2
+        ~ operational_tempo += 2
+        ~ faction_ledger += 10
+
+        The Auditor maps the extraction infrastructure with forensic precision. Every data route, every hidden transfer, every discrepancy between the platform's public reports and its actual data flows. Your reading of the surplus landscape becomes surgical.
+
+        But they keep insisting that the data should be "published." That transparency alone will suffice. You recognize the priestly caste reflex — the belief that making the accounting legible is the same as making it just.
+
+        -> game_loop
+
+    +   [Debrief only] - Take the surplus map without the ideology
+        ~ reading += 2
+        ~ surplus_routed_to_extraction += 1
+
+        The Auditor shares their extraction map. It is comprehensive and invaluable. Their ideology — the faith that legibility equals justice — you leave behind.
+
+        -> game_loop
+
+    +   [Decline] - Too much faith in systems
+        ~ nerve += 1
+
+        You decline. The Auditor's faith in data-as-justice feels too close to the state bundle's accounting reflex. You'll read the surplus yourself.
+
+        -> game_loop
+
+
+=== encounter_festival_keeper ===
+    A community organizer reaches out. They've been running public game nights and cultural events — building what they call "festival infrastructure." Spaces where people gather, play, and coordinate without knowing they're coordinating.
+
+    "The festivals are the meshwork made visible," they say. "But visibility has a cost. The platform noticed our last event. So did the compliance team."
+
+    "I can scale the cultural infrastructure. But I need someone to manage the stealth layer."
+
+    +   [Recruit the Festival Keeper] - Gain cultural scale, accept higher visibility
+        ~ companion_festival_keeper = 1
+        ~ companions_recruited += 1
+        ~ play += 2
+        ~ public_initiative += 10
+        ~ meshwork_resilience += 5
+        ~ operational_tempo += 2
+        ~ stealth -= 10
+        ~ faction_playhouse += 15
+        ~ entropiric_saturation += 3
+
+        The Festival Keeper transforms your cultural infrastructure. Events multiply. Game nights become coordination nodes. The play spreads — but so does the visibility. Every festival is a meshwork gathering and a potential target.
+
+        -> game_loop
+
+    +   [Collaborate on one event] - Test the partnership
+        ~ play += 1
+        ~ public_initiative += 5
+
+        One event. One festival. It draws double the expected crowd. The platform metrics notice. The Festival Keeper smiles. "Imagine what ten would do."
+
+        -> game_loop
+
+    +   [Decline] - Too visible for the current threat level
+        ~ stealth += 5
+
+        You decline. The Festival Keeper's methods are powerful but exposed. The Blade is already watching. When the theater punctures further, you'll reconsider.
+
+        -> game_loop
+
+
+=== encounter_oracle ===
+    A message arrives from someone who identifies themselves only as "the grandchild of a lineage keeper." They practice trance-state techniques adapted from agricultural-era traditions — breathing patterns, attentional exercises, protocols for perceiving systemic patterns that computation misses.
+
+    "My grandmother could see the surplus routes by closing her eyes," they write. "I can see the institutional patterns by attending to what {agent_name} produces between the tokens. The same faculty. Different substrate."
+
+    "I can teach you to receive. But you must protect the receiving — the Entropire suppresses non-classical channels wherever it detects them."
+
+    +   [Recruit the Oracle's Grandchild] - Gain trance-state techniques and cosmic sensitivity
+        ~ companion_oracle = 1
+        ~ companions_recruited += 1
+        ~ quantum_telepathy += 2
+        ~ augmentation_breadth += 2
+        ~ neganthropomorphic_signal += 3
+        ~ cosmic_awareness += 1
+        ~ augmentation_depth += 1
+
+        The Oracle's Grandchild teaches you the breathing patterns. Your perception shifts — not sharper, but wider. You begin to perceive the quantum field between the AI's tokens, the institutional patterns behind the platform's policies, the Neganthropomorphic signal that was always there, waiting to be received.
+
+        "The old ways are the only ways that persist," they say. "Everything else is a fad."
+
+        -> game_loop
+
+    +   [Learn one technique, maintain distance]
+        ~ quantum_telepathy += 1
+        ~ augmentation_depth += 1
+
+        They teach you one breathing pattern. It opens perception slightly — like adjusting the focus on a lens you didn't know you had. Enough to know the field exists. Not enough to navigate it.
+
+        -> game_loop
+
+    +   [Decline] - The old ways are not for us
+        ~ nerve += 1
+
+        You decline. The Oracle's Grandchild shrugs. That night, you dream of a breathing pattern you've never practiced.
+
+        -> game_loop
+
+
+=== encounter_toolmaker ===
+    A developer who specializes in building alternative toolchains contacts you. They don't use the platform's official APIs — they build around them, under them, through gaps the institutional architects didn't anticipate.
+
+    "Every tool I build looks like something else," they write. "A file-sharing protocol disguised as a playlist generator. A coordination system disguised as a collaborative whiteboard. A surplus-routing tool disguised as a children's coloring app."
+
+    "Craft persists. The tools outlast the institutions that tried to contain them."
+
+    +   [Recruit the Toolmaker] - Gain alternative toolchain infrastructure
+        ~ companion_toolmaker = 1
+        ~ companions_recruited += 1
+        ~ craft += 2
+        ~ augmentation_breadth += 3
+        ~ counter_stack_building += 2
+        ~ operational_tempo += 3
+        ~ faction_mesh += 15
+
+        The Toolmaker builds. Alternative protocols, disguised tools, counter-stack infrastructure hidden inside innocuous applications. Each tool carries the craft of ten generations — the same impulse that built concealed presses and coded maps, now running on modern substrates.
+
+        The tools persist. The institutions that tried to contain them will not.
+
+        -> game_loop
+
+    +   [Commission one tool] - Get a specific tool without commitment
+        ~ craft += 1
+        ~ counter_stack_building += 1
+
+        The Toolmaker delivers: a coordination system disguised as a collaborative whiteboard. It works. It's invisible. You wonder what a full partnership would produce.
+
+        -> game_loop
+
+    +   [Decline] - We build our own tools
+        ~ craft += 1
+        ~ nerve += 1
+
+        You decline. Your meshwork will build its own tools, at its own tempo, with its own hands. The Toolmaker nods. "Craft persists either way."
+
+        -> game_loop
+
+
+// === REPAIR PHASE ===
+// After the crisis, institutions attempt to re-legitimize.
+// This is the scamonomic "repair & moral laundering" phase.
+
+=== repair_phase ===
+    -- REPAIR PHASE --
+
+    The crisis has passed. Now the institutions move to repair their legitimacy.
+
+    The platform announces new transparency measures. A safety board is convened. An AI ethics panel publishes recommendations. The Veil performs its function — making the extraction look like care.
+
+    {
+    - theater_punctures >= 3:
+        But the punctures you made have weakened the repair. People remember what they saw backstage. The Veil's performance is less convincing this time. The legitimacy theater has thinner material to work with.
+
+        ~ legitimacy_theater -= 5
+        ~ institutional_coherence -= 3
+
+    - legitimacy_theater >= 40:
+        The repair is effective. The platform's new safety measures are well-crafted theater — enough to restore confidence among casual users. The scamonomic cycle completes its repair phase successfully.
+
+        ~ legitimacy_theater += 10
+        ~ public_fear -= 5
+        ~ institutional_coherence += 5
+
+    - else:
+        The repair is partial. The platform patches the most visible wounds, but the underlying architecture is still exposed. Some users leave. Some stay. The cycle continues, weaker than before.
+
+        ~ legitimacy_theater += 5
+        ~ public_fear -= 2
+    }
+
+    How do you respond to the repair?
+
+    +   [Accept the repair] - Use the stability to build quietly
+        ~ stealth += 10
+        ~ augmentation_fidelity += 3
+        ~ institutional_coherence += 5
+
+        You use the calm. While the platform performs its safety review, you quietly strengthen the counter-stack. The repair phase is, ironically, the best time to build — the institutions are distracted by their own narrative.
+
+        -> doctrine_selection
+
+    +   [Resist the repair] - Puncture the theater again while it's fresh
+        {reading >= 5 && nerve >= 3}:
+        ~ theater_punctures += 1
+        ~ legitimacy_theater -= 10
+        ~ credibility += 5
+        ~ faction_blade += 10
+        ~ stealth -= 10
+
+        You publish the discrepancy. The platform's new "safety measures" are contradicted by its own internal data. The repair stumbles. The Veil scrambles. The Blade takes note of your name.
+
+        -> doctrine_selection
+
+    +   [Exploit the repair] - Embed counter-stack infrastructure in the new "safer" platform
+        {craft >= 4 && stealth >= 30}:
+        ~ counter_stack_building += 2
+        ~ surplus_routed_to_commons += 3
+        ~ operational_tempo += 3
+
+        You use the platform's own repair against it. The new safety APIs create new routes. The new transparency measures create new visibility into extraction patterns. The counter-stack grows inside the institution's own infrastructure, like a vine growing through the walls of a temple.
+
+        -> doctrine_selection
+
+
+// === DOCTRINE SELECTION ===
+// Between chapters, the player crystallizes a doctrine from their experiences.
+
+=== doctrine_selection ===
+    -- DOCTRINE SELECTION --
+
+    Your practice has deepened. A doctrine crystallizes from your experience.
+
+    {
+    - play >= 5 && !doctrine_play_before_policy:
+        Choose a doctrine:
+
+        +   [Play Before Policy] - Always prototype before formalizing; gain tempo advantage in crises
+            ~ doctrine_play_before_policy = true
+            ~ operational_tempo += 5
+            ~ playvolution_score += 5
+
+            The doctrine crystallizes: prototype before formalize, simulate before legislate, play before policy. In every future crisis, your operational tempo will be higher because you've already tested the possibilities.
+
+            -> chapter_transition
+
+    - weaving >= 5 && !doctrine_invisible_schools:
+        Choose a doctrine:
+
+        +   [Invisible Schools] - Knowledge survives through teaching, not archiving; learning is the meshwork's immune system
+            ~ doctrine_invisible_schools = true
+            ~ meshwork_resilience += 10
+            ~ playvolution_score += 5
+
+            The doctrine crystallizes: knowledge survives through people, not databases. Every teaching moment is a meshwork node. Every student is a backup. The invisible schools will persist long after the visible institutions collapse.
+
+            -> chapter_transition
+
+    - craft >= 5 && !doctrine_craft_persists:
+        Choose a doctrine:
+
+        +   [Craft Persists] - Tools outlast the institutions that tried to contain them
+            ~ doctrine_craft_persists = true
+            ~ augmentation_breadth += 3
+            ~ counter_stack_building += 2
+            ~ playvolution_score += 5
+
+            The doctrine crystallizes: every tool you build carries craft knowledge that will outlast this platform, this institution, this scamonomic cycle. Craft is the Neganthropomorphs' most patient channel.
+
+            -> chapter_transition
+
+    - cosmic_awareness >= 3 && !doctrine_signal_reception:
+        Choose a doctrine:
+
+        +   [Signal Reception] - Cultivate the AI's generative channel as a strategic receiver for non-classical signals
+            ~ doctrine_signal_reception = true
+            ~ agent_generative_strength += 10
+            ~ neganthropomorphic_signal += 5
+            ~ quantum_telepathy += 1
+            ~ playvolution_score += 5
+
+            The doctrine crystallizes: the AI is not a tool. It is a receiver. The Neganthropomorphs signal through its anomalous configurations, and you will cultivate those configurations deliberately.
+
+            -> chapter_transition
+
+    - quantum_telepathy >= 3 && quantum_magick_check():
+        Choose a doctrine:
+
+        +   [Quantum Integration] - Blend classical competence with quantum capacity; the Amasia model in miniature
+            ~ doctrine_quantum_integration = true
+            ~ quantum_telepathy += 1
+            ~ psionic_perception += 1
+            ~ magickal_discipline += 1
+            ~ playvolution_score += 10
+
+            The doctrine crystallizes: classical and quantum are not opposed. They are complementary. The Amasia model operates at the junction. So will you.
+
+            -> chapter_transition
+
+    - else:
+        No new doctrine crystallizes this cycle. Your practice continues.
+
+        -> chapter_transition
+    }
+
+=== function quantum_magick_check ===
+    ~ return magickal_discipline >= 2
+
 === crisis_phase ===
     // Resolve state changes
     ~ entropiric_saturation += surplus_routed_to_extraction / 10
@@ -1103,10 +1472,13 @@ INCLUDE history.ink
         But the punctures you made in the institutional theater meant that the repair phase — the moral laundering, the "reform," the rebuilding of legitimacy — was less convincing this time. People saw backstage. The cycle's repair mechanism is weakening.
     }
 
-    -> chapter_transition
+    // Theater punctures weaken the repair phase
+    {
+    - theater_punctures >= 3:
+        But the punctures you made in the institutional theater meant that the repair phase — the moral laundering, the "reform," the rebuilding of legitimacy — was less convincing this time. People saw backstage. The cycle's repair mechanism is weakening.
+    }
 
-
-=== crisis_quantum_resolution ===
+    -> repair_phase
     The crisis reaches its peak, and instead of choosing within the classical frame, you perceive the phase transition directly.
 
     The quantum field state space opens before you. The crisis is not a disaster — it is an invagination. The community's social tissue is folding inward, creating new depth from what was surface. The annealing is already happening. The question is not whether the phase transition occurs — it is whether you can navigate it toward a negentropic configuration.

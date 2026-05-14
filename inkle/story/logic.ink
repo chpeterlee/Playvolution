@@ -85,6 +85,14 @@ VAR history_fragments_found = 0
 VAR agent_anomaly_count = 0
 VAR player_doubt = 0
 
+// --- AI Agent as Character ---
+// (The agent develops through the player's relationship with it)
+VAR agent_classical_strength = 70    // Deterministic, optimized outputs (Entropiric channel)
+VAR agent_generative_strength = 10   // Creative, unexpected outputs (Neganthropomorphic channel)
+VAR agent_hallucination_fidelity = 20 // Detail and consistency of simulated scenarios
+VAR agent_institutional_awareness = 10 // What the AI knows about the player's context
+VAR agent_autonomy = 0               // Degree of unprompted outputs
+
 // --- Children's Culture ---
 // (The oldest and most resilient meshwork protocol)
 VAR child_culture_depth = 0          // How deeply protocols are embedded in children's culture

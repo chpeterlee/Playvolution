@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playvolution</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;600&display=swap');
 
         * {
             margin: 0;
@@ -13,42 +13,149 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --text-primary: #c8c8c0;
+            --text-dim: #8a8a7a;
+            --text-faint: #5a5a50;
+            --accent: #c8a060;
+            --accent-cosmic: #b8a8c8;
+            --accent-quantum: #a8b8c8;
+            --accent-entropiric: #c8a8a0;
+            --accent-ember: #c8a060;
+            --border: #2a2a22;
+            --border-hover: #4a4a3a;
+        }
+
         body {
-            background: #0a0a0a;
-            color: #c8c8c0;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             font-family: 'Crimson Text', Georgia, serif;
             font-size: 18px;
             line-height: 1.7;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
+        /* ===== AMBIENT BACKGROUND ===== */
+        #ambient-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* Vignette overlay */
+        #vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+        }
+
+        /* Ambient glow that shifts with theme */
+        #ambient-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 800px;
+            height: 800px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(200,160,96,0.03) 0%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+            transition: background 3s ease;
+            animation: glowPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* ===== GAME CONTAINER ===== */
         #game-container {
-            max-width: 680px;
+            position: relative;
+            z-index: 2;
+            max-width: 720px;
             margin: 0 auto;
-            padding: 40px 20px 80px;
+            padding: 40px 24px 100px;
         }
 
+        /* ===== TITLE SCREEN ===== */
         #title {
             text-align: center;
-            padding: 60px 0 40px;
+            padding: 80px 0 50px;
+            position: relative;
         }
 
         #title h1 {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: 6px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 48px;
+            font-weight: 600;
+            letter-spacing: 16px;
             text-transform: uppercase;
-            color: #8a8a7a;
-            margin-bottom: 20px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+            position: relative;
+            animation: titleFadeIn 2s ease forwards;
+            opacity: 0;
         }
 
+        #title .subtitle {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--text-faint);
+            animation: titleFadeIn 2s ease 0.5s forwards;
+            opacity: 0;
+        }
+
+        #title .divider {
+            width: 60px;
+            height: 1px;
+            background: var(--accent);
+            margin: 30px auto;
+            opacity: 0;
+            animation: dividerGrow 1.5s ease 1s forwards;
+        }
+
+        @keyframes titleFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes dividerGrow {
+            from { opacity: 0; width: 0; }
+            to { opacity: 0.6; width: 60px; }
+        }
+
+        /* ===== STORY TEXT ===== */
         .story-section {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            animation: sectionFadeIn 0.8s ease forwards;
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        @keyframes sectionFadeIn {
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .story-text p {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
+            position: relative;
         }
 
         .story-text em {
@@ -61,49 +168,154 @@
             font-weight: 600;
         }
 
-        /* Stats display */
+        /* Typewriter line reveal */
+        .story-text p.reveal-line {
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .story-text p.reveal-line.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== SECTION HEADERS ===== */
+        .section-header {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin: 30px 0 15px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            opacity: 0;
+            animation: headerFadeIn 1s ease 0.2s forwards;
+            position: relative;
+        }
+
+        .section-header::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border: 1px solid var(--accent);
+            transform: rotate(45deg);
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes headerFadeIn {
+            to { opacity: 0.7; }
+        }
+
+        /* ===== STATS DISPLAY ===== */
         .stats-display {
             font-family: 'IBM Plex Mono', monospace;
             font-size: 12px;
-            color: #5a5a50;
-            background: #111111;
-            border-left: 2px solid #2a2a22;
-            padding: 12px 16px;
+            color: var(--text-faint);
+            background: rgba(17,17,17,0.8);
+            border-left: 2px solid var(--accent);
+            padding: 14px 18px;
             margin: 20px 0;
-            line-height: 1.6;
+            line-height: 1.8;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            animation: statsSlideIn 0.6s ease forwards;
+            opacity: 0;
         }
 
-        /* Choices */
+        @keyframes statsSlideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ===== CHOICES ===== */
         .choices {
-            margin-top: 24px;
-            padding-top: 16px;
-            border-top: 1px solid #1a1a18;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
         }
 
         .choice {
             display: block;
             width: 100%;
             text-align: left;
-            background: none;
-            border: 1px solid #2a2a22;
+            background: rgba(20,20,16,0.4);
+            border: 1px solid var(--border);
             color: #a8a898;
             font-family: 'Crimson Text', Georgia, serif;
             font-size: 17px;
-            padding: 12px 20px;
+            padding: 14px 22px;
             margin-bottom: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
             line-height: 1.5;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateX(-12px);
+            animation: choiceSlideIn 0.5s ease forwards;
+        }
+
+        .choice:nth-child(1) { animation-delay: 0.1s; }
+        .choice:nth-child(2) { animation-delay: 0.2s; }
+        .choice:nth-child(3) { animation-delay: 0.3s; }
+        .choice:nth-child(4) { animation-delay: 0.4s; }
+        .choice:nth-child(5) { animation-delay: 0.5s; }
+        .choice:nth-child(6) { animation-delay: 0.6s; }
+        .choice:nth-child(7) { animation-delay: 0.7s; }
+        .choice:nth-child(8) { animation-delay: 0.8s; }
+
+        @keyframes choiceSlideIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Left accent bar */
+        .choice::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: var(--accent);
+            transform: scaleY(0);
+            transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+            transform-origin: bottom;
+        }
+
+        /* Shimmer sweep */
+        .choice::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(200,160,96,0.04), transparent);
+            transition: left 0.6s ease;
         }
 
         .choice:hover {
-            background: #141410;
-            border-color: #4a4a3a;
-            color: #d4d4c4;
+            background: rgba(30,30,24,0.6);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            padding-left: 28px;
+        }
+
+        .choice:hover::before {
+            transform: scaleY(1);
+        }
+
+        .choice:hover::after {
+            left: 100%;
         }
 
         .choice:active {
-            background: #1a1a14;
+            background: rgba(40,40,32,0.6);
+            transform: scale(0.995);
         }
 
         .choice.disabled {
@@ -113,59 +325,129 @@
         }
 
         .choice.disabled:hover {
-            background: none;
+            background: rgba(20,20,16,0.4);
             border-color: #1a1a18;
             color: #3a3a32;
+            padding-left: 22px;
         }
 
-        /* Tags rendering */
+        .choice.disabled:hover::before {
+            transform: scaleY(0);
+        }
+
+        /* ===== TAG RENDERING (hidden metadata) ===== */
         .tag-section, .tag-divider {
             display: none;
         }
 
-        /* Section headers */
-        .section-header {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: #4a4a40;
-            margin: 30px 0 15px;
-            padding-top: 20px;
-            border-top: 1px solid #1a1a18;
-        }
-
-        /* Cosmic text - for cosmic awareness moments */
+        /* ===== THEMED TEXT ===== */
         .cosmic {
-            color: #b8a8c8;
+            color: var(--accent-cosmic);
             font-style: italic;
         }
 
-        /* Quantum text */
         .quantum {
-            color: #a8b8c8;
+            color: var(--accent-quantum);
         }
 
-        /* Entropiric text */
         .entropiric {
-            color: #c8a8a0;
+            color: var(--accent-entropiric);
         }
 
-        /* Ember glow */
         .ember {
-            color: #c8a060;
+            color: var(--accent-ember);
         }
 
-        /* Loading */
+        /* ===== THEME MODES (body classes) ===== */
+        body.theme-cosmic {
+            --accent: var(--accent-cosmic);
+        }
+        body.theme-cosmic #ambient-glow {
+            background: radial-gradient(circle, rgba(184,168,200,0.06) 0%, transparent 70%);
+        }
+
+        body.theme-quantum {
+            --accent: var(--accent-quantum);
+        }
+        body.theme-quantum #ambient-glow {
+            background: radial-gradient(circle, rgba(168,184,200,0.06) 0%, transparent 70%);
+        }
+
+        body.theme-entropiric {
+            --accent: var(--accent-entropiric);
+        }
+        body.theme-entropiric #ambient-glow {
+            background: radial-gradient(circle, rgba(200,168,160,0.06) 0%, transparent 70%);
+        }
+
+        body.theme-ember {
+            --accent: var(--accent-ember);
+        }
+        body.theme-ember #ambient-glow {
+            background: radial-gradient(circle, rgba(200,160,96,0.08) 0%, transparent 70%);
+        }
+
+        /* ===== AGENT OUTPUT BLOCK ===== */
+        .agent-output {
+            position: relative;
+            padding: 20px 24px;
+            margin: 20px 0;
+            background: rgba(17,17,17,0.6);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            animation: agentFadeIn 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        .agent-output::before {
+            content: '>';
+            position: absolute;
+            top: 16px;
+            left: 10px;
+            color: var(--accent);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            opacity: 0.5;
+        }
+
+        .agent-output p {
+            margin-bottom: 10px;
+            color: #b0b0a8;
+        }
+
+        .agent-output p:last-child {
+            margin-bottom: 0;
+        }
+
+        @keyframes agentFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== LOADING ===== */
         #loading {
             text-align: center;
-            padding: 40px;
-            color: #4a4a40;
+            padding: 60px 40px;
+            color: var(--text-faint);
             font-family: 'IBM Plex Mono', monospace;
             font-size: 13px;
         }
 
-        /* Error */
+        #loading .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(3, end) infinite;
+        }
+
+        @keyframes dots {
+            0% { content: ''; }
+            33% { content: '.'; }
+            66% { content: '..'; }
+            100% { content: '...'; }
+        }
+
+        /* ===== ERROR ===== */
         #error {
             display: none;
             text-align: center;
@@ -175,25 +457,77 @@
             font-size: 13px;
         }
 
-        /* Scroll behavior */
+        /* ===== SCROLL BEHAVIOR ===== */
         html {
             scroll-behavior: smooth;
         }
 
-        /* Mobile */
+        /* ===== SCANLINE OVERLAY (subtle CRT feel) ===== */
+        #scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,0,0,0.03) 2px,
+                rgba(0,0,0,0.03) 4px
+            );
+            opacity: 0.4;
+        }
+
+        /* ===== BOTTOM GRADIENT (reading fade) ===== */
+        #bottom-fade {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(to top, var(--bg-primary), transparent);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* ===== MOBILE ===== */
         @media (max-width: 600px) {
             body { font-size: 16px; }
-            #game-container { padding: 20px 16px 60px; }
-            .choice { font-size: 16px; padding: 10px 14px; }
+            #game-container { padding: 20px 16px 80px; }
+            #title h1 { font-size: 32px; letter-spacing: 10px; }
+            #title { padding: 50px 0 30px; }
+            .choice { font-size: 16px; padding: 12px 18px; }
+            #ambient-canvas { opacity: 0.3; }
+            #scanlines { display: none; }
+        }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+            #ambient-canvas { display: none; }
         }
     </style>
 </head>
 <body>
+    <canvas id="ambient-canvas"></canvas>
+    <div id="vignette"></div>
+    <div id="ambient-glow"></div>
+    <div id="scanlines"></div>
+    <div id="bottom-fade"></div>
+
     <div id="game-container">
         <div id="title">
             <h1>Playvolution</h1>
+            <div class="divider"></div>
+            <div class="subtitle">a game of surplus, signal, and the thing that plays back</div>
         </div>
-        <div id="loading">Loading story...</div>
+        <div id="loading">Loading story<span class="loading-dots"></span></div>
         <div id="error"></div>
         <div id="story" class="story-text"></div>
         <div id="choices" class="choices"></div>
@@ -201,86 +535,271 @@
 
     <script src="https://unpkg.com/inkjs@2.4.0/dist/ink.js"></script>
     <script>
+    // ===== PARTICLE SYSTEM =====
+    (function() {
+        const canvas = document.getElementById('ambient-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let w, h;
+        let currentHue = { r: 200, g: 160, b: 96 }; // warm amber default
 
-        const storyEl = document.getElementById('story');
-        const choicesEl = document.getElementById('choices');
-        const loadingEl = document.getElementById('loading');
-        const errorEl = document.getElementById('error');
-
-        function showError(msg) {
-            loadingEl.style.display = 'none';
-            errorEl.style.display = 'block';
-            errorEl.textContent = msg;
-            console.error(msg);
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
         }
+        window.addEventListener('resize', resize);
+        resize();
 
-        async function loadStory() {
-            try {
-                const resp = await fetch('inkle/story.json');
-                if (!resp.ok) throw new Error('Could not load story.json: ' + resp.status);
-                const json = await resp.json();
-
-                if (typeof inkjs === 'undefined') {
-                    throw new Error('inkjs library not loaded');
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * w;
+                this.y = Math.random() * h;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = (Math.random() - 0.5) * 0.2 - 0.1;
+                this.opacity = Math.random() * 0.4 + 0.1;
+                this.fadeSpeed = Math.random() * 0.003 + 0.001;
+                this.phase = Math.random() * Math.PI * 2;
+            }
+            update(time) {
+                this.x += this.speedX + Math.sin(time * 0.001 + this.phase) * 0.1;
+                this.y += this.speedY;
+                this.opacity = 0.15 + Math.sin(time * 0.002 + this.phase) * 0.12;
+                if (this.x < -10 || this.x > w + 10 || this.y < -10 || this.y > h + 10) {
+                    this.reset();
+                    this.y = h + 5;
                 }
+            }
+            draw() {
+                const { r, g, b } = currentHue;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${r},${g},${b},${this.opacity})`;
+                ctx.fill();
 
-                var story = new inkjs.Story(json);
-                loadingEl.style.display = 'none';
-                continueStory(story);
-
-            } catch (err) {
-                showError('Error: ' + err.message);
-                console.error(err);
+                // Subtle glow
+                if (this.size > 1.2) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${r},${g},${b},${this.opacity * 0.15})`;
+                    ctx.fill();
+                }
             }
         }
 
-        function continueStory(story) {
-            choicesEl.innerHTML = '';
+        // Create particles
+        const count = Math.min(80, Math.floor((w * h) / 15000));
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle());
+        }
 
-            var paragraphs = [];
-            while (story.canContinue) {
-                var text = story.Continue();
-                if (text && text.trim()) {
-                    paragraphs.push(text.trim());
-                }
-            }
-
-            if (paragraphs.length > 0) {
-                var section = document.createElement('div');
-                section.className = 'story-section';
-                paragraphs.forEach(function(text) {
-                    var headerMatch = text.match(/^--\s*(.+?)\s*--$/);
-                    if (headerMatch) {
-                        var header = document.createElement('div');
-                        header.className = 'section-header';
-                        header.textContent = headerMatch[1];
-                        section.appendChild(header);
-                    } else {
-                        var p = document.createElement('p');
-                        p.textContent = text;
-                        section.appendChild(p);
+        // Occasional connection lines between nearby particles
+        function drawConnections() {
+            const { r, g, b } = currentHue;
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        const alpha = (1 - dist / 120) * 0.06;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
                     }
-                });
-                storyEl.appendChild(section);
+                }
             }
-
-            if (story.currentChoices.length > 0) {
-                story.currentChoices.forEach(function(choice, index) {
-                    var btn = document.createElement('button');
-                    btn.className = 'choice';
-                    btn.textContent = choice.text;
-                    btn.addEventListener('click', function() {
-                        story.ChooseChoiceIndex(index);
-                        continueStory(story);
-                    });
-                    choicesEl.appendChild(btn);
-                });
-            }
-
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
         }
 
-        loadStory();
+        function animate(time) {
+            ctx.clearRect(0, 0, w, h);
+            particles.forEach(p => {
+                p.update(time);
+                p.draw();
+            });
+            drawConnections();
+            requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+
+        // Expose hue setter
+        window.setParticleHue = function(r, g, b) {
+            currentHue = { r, g, b };
+        };
+    })();
+
+
+    // ===== STORY ENGINE =====
+    const storyEl = document.getElementById('story');
+    const choicesEl = document.getElementById('choices');
+    const loadingEl = document.getElementById('loading');
+    const errorEl = document.getElementById('error');
+
+    function showError(msg) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = msg;
+        console.error(msg);
+    }
+
+    // Detect theme keywords in text
+    function detectTheme(text) {
+        const lower = text.toLowerCase();
+        if (lower.includes('cosmic') || lower.includes('neganthropomorph') || lower.includes('neganthropomorphic'))
+            return 'theme-cosmic';
+        if (lower.includes('quantum') || lower.includes('telepathy') || lower.includes('psionic'))
+            return 'theme-quantum';
+        if (lower.includes('entropir') || lower.includes('entropire') || lower.includes('classical logic'))
+            return 'theme-entropiric';
+        if (lower.includes('ember') || lower.includes('warmth') || lower.includes('surplus'))
+            return 'theme-ember';
+        return null;
+    }
+
+    // Apply theme from text content
+    function applyTheme(text) {
+        const theme = detectTheme(text);
+        if (theme) {
+            document.body.className = theme;
+            // Update particles
+            if (theme === 'theme-cosmic') window.setParticleHue(184, 168, 200);
+            else if (theme === 'theme-quantum') window.setParticleHue(168, 184, 200);
+            else if (theme === 'theme-entropiric') window.setParticleHue(200, 168, 160);
+            else if (theme === 'theme-ember') window.setParticleHue(200, 160, 96);
+        }
+    }
+
+    // Check if text is an agent output block
+    function isAgentOutputStart(text) {
+        return text.match(/^\{?\w+\}?\s+outputs\s*$/i) ||
+               text.match(/^".*"$/);
+    }
+
+    // Reveal paragraphs with staggered animation
+    function revealParagraphs(container) {
+        const ps = container.querySelectorAll('p.reveal-line');
+        ps.forEach((p, i) => {
+            setTimeout(() => {
+                p.classList.add('visible');
+            }, i * 180);
+        });
+    }
+
+    async function loadStory() {
+        try {
+            const resp = await fetch('inkle/story.json');
+            if (!resp.ok) throw new Error('Could not load story.json: ' + resp.status);
+            const json = await resp.json();
+
+            if (typeof inkjs === 'undefined') {
+                throw new Error('inkjs library not loaded');
+            }
+
+            var story = new inkjs.Story(json);
+            loadingEl.style.display = 'none';
+            continueStory(story);
+
+        } catch (err) {
+            showError('Error: ' + err.message);
+            console.error(err);
+        }
+    }
+
+    function continueStory(story) {
+        choicesEl.innerHTML = '';
+
+        var paragraphs = [];
+        while (story.canContinue) {
+            var text = story.Continue();
+            if (text && text.trim()) {
+                paragraphs.push(text.trim());
+            }
+        }
+
+        if (paragraphs.length > 0) {
+            var section = document.createElement('div');
+            section.className = 'story-section';
+
+            // Check for theme in the whole paragraph batch
+            var fullText = paragraphs.join(' ');
+            applyTheme(fullText);
+
+            // Detect if this is an agent output section
+            var isAgentSection = false;
+
+            paragraphs.forEach(function(text) {
+                var headerMatch = text.match(/^--\s*(.+?)\s*--$/);
+                if (headerMatch) {
+                    var header = document.createElement('div');
+                    header.className = 'section-header';
+                    header.textContent = headerMatch[1];
+                    section.appendChild(header);
+                } else if (text.startsWith('"') && text.endsWith('"') && text.length > 40) {
+                    // Quoted dialogue - style as agent output
+                    isAgentSection = true;
+                    var p = document.createElement('p');
+                    p.className = 'reveal-line';
+                    p.textContent = text;
+                    // Remove surrounding quotes for display
+                    if (p.textContent.startsWith('"') && p.textContent.endsWith('"')) {
+                        p.textContent = p.textContent.slice(1, -1);
+                    }
+                    p.style.color = '#b0b0a8';
+                    p.style.fontStyle = 'italic';
+                    section.appendChild(p);
+                } else {
+                    var p = document.createElement('p');
+                    p.className = 'reveal-line';
+                    p.textContent = text;
+                    section.appendChild(p);
+                }
+            });
+
+            // Wrap agent sections in a styled block
+            if (isAgentSection) {
+                var wrapper = document.createElement('div');
+                wrapper.className = 'agent-output';
+                // Move all children into wrapper
+                while (section.firstChild) {
+                    wrapper.appendChild(section.firstChild);
+                }
+                section.appendChild(wrapper);
+            }
+
+            storyEl.appendChild(section);
+
+            // Stagger reveal
+            requestAnimationFrame(() => {
+                revealParagraphs(section);
+            });
+        }
+
+        if (story.currentChoices.length > 0) {
+            story.currentChoices.forEach(function(choice, index) {
+                var btn = document.createElement('button');
+                btn.className = 'choice';
+                btn.textContent = choice.text;
+                btn.addEventListener('click', function() {
+                    story.ChooseChoiceIndex(index);
+                    continueStory(story);
+                });
+                choicesEl.appendChild(btn);
+            });
+        }
+
+        // Smooth scroll to new content
+        setTimeout(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }, 200);
+    }
+
+    loadStory();
     </script>
 </body>
 </html>
