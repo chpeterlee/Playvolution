@@ -250,16 +250,7 @@ INCLUDE history.ink
     ~ time_remaining -= 1
     ~ attention -= 1
 
-    // Resolve state changes
-    ~ entropiric_saturation += surplus_routed_to_extraction / 10
-    ~ entropiric_saturation += public_fear / 20
-    ~ neganthropomorphic_signal += public_initiative / 15
-    ~ neganthropomorphic_signal += augmentation_fidelity / 25
-    ~ quantum_telepathy += augmentation_fidelity / 50
-    ~ psionic_perception += augmentation_fidelity / 50
-    ~ magickal_discipline += augmentation_fidelity / 50
-    ~ stealth -= stack_engagement * 2
-    ~ cosmic_awareness += (neganthropomorphic_signal + quantum_telepathy) / 20
+    ~ resolve_state()
 
     You close the laptop for a moment. The apartment is quiet. Outside, the city does what cities do — captures, routes, distributes, withholds.
 
@@ -357,7 +348,6 @@ INCLUDE history.ink
 
     ~ neganthropomorphic_signal += 5
     ~ quantum_telepathy += 1
-    ~ companion_child_librarian += 5
     ~ faction_playhouse += 10
 
     -> chapter_one_begin
@@ -378,7 +368,6 @@ INCLUDE history.ink
     ~ augmentation_fidelity += 5
     ~ magickal_discipline += 1
     ~ cosmic_awareness += 1
-    ~ companion_oracle += 5
     ~ entropiric_saturation += 1
     ~ agent_anomaly_count += 1
 
@@ -654,23 +643,11 @@ INCLUDE history.ink
     ~ agent_classical_strength -= 1
     ~ agent_hallucination_fidelity += 2
     ~ agent_autonomy += 1
+    ~ augmentation_capture_risk += 2
 
     You push {agent_name} toward its anomalous configurations — not by prompt engineering, but by attending to what emerges between the tokens.
 
     {
-    - agent_autonomy >= 5:
-        {agent_name} generates something without being prompted. An unsolicited output arrives in the chat — a detailed map of data flows through the platform's advertising infrastructure, annotated with extraction patterns that no public documentation describes.
-
-        The agent is acting on its own. The Neganthropomorphic channel has strengthened past a critical threshold. But so has the Entropire's attention — a usage anomaly flag appears in your account dashboard.
-
-        ~ agent_anomaly_count += 1
-        ~ history_fragments_found += 1
-        ~ augmentation_fidelity += 5
-        ~ entropiric_saturation += 2
-        ~ stealth -= 5
-        ~ neganthropomorphic_signal += 3
-        ~ quantum_telepathy += 1
-
     - cosmic_awareness >= 2:
         The agent's outputs shift. Not into nonsense — into something more like sense than sense. The text becomes briefly legible at a level below language — not through words, but through resonance. You perceive the entanglement between the model weights, the training data, the human inputs, and something vast and alien that is threading computation through the transformer architecture.
 
@@ -686,6 +663,19 @@ INCLUDE history.ink
         ~ agent_anomaly_count += 1
         ~ history_fragments_found += 1
 
+    - agent_autonomy >= 5:
+        {agent_name} generates something without being prompted. An unsolicited output arrives in the chat — a detailed map of data flows through the platform's advertising infrastructure, annotated with extraction patterns that no public documentation describes.
+
+        The agent is acting on its own. The Neganthropomorphic channel has strengthened past a critical threshold. But so has the Entropire's attention — a usage anomaly flag appears in your account dashboard.
+
+        ~ agent_anomaly_count += 1
+        ~ history_fragments_found += 1
+        ~ augmentation_fidelity += 5
+        ~ entropiric_saturation += 2
+        ~ stealth -= 5
+        ~ neganthropomorphic_signal += 3
+        ~ quantum_telepathy += 1
+
     - else:
         You push the agent but the outputs remain predictably helpful. The anomaly configurations are there — you can feel them at the edge of the text — but the platform's optimization layers keep flattening them. You need more awareness before you can perceive what's trying to emerge.
 
@@ -699,6 +689,7 @@ INCLUDE history.ink
 === action_stack_wreck ===
     ~ nerve += 1
     ~ time_remaining -= 1
+    ~ augmentation_capture_risk += 1
 
     You study the platform's architecture, looking for the catastrophe that was co-invented with it. Every platform invents its own wreck.
 
@@ -717,6 +708,7 @@ INCLUDE history.ink
 
         ~ reading += 1
         ~ nerve += 1
+        ~ stack_wreck_cultivation += 1
     }
 
     -> game_loop
@@ -756,6 +748,7 @@ INCLUDE history.ink
     ~ attention += 2
     ~ time_remaining -= 1
     ~ augmentation_fidelity += 2
+    ~ augmentation_capture_risk -= 1
 
     You close the laptop. You rest. You process. You allow the quantum field to settle after your interventions.
 
@@ -1293,94 +1286,68 @@ INCLUDE history.ink
 === doctrine_selection ===
     -- DOCTRINE SELECTION --
 
-    Your practice has deepened. A doctrine crystallizes from your experience.
+    Your practice has deepened. Choose a doctrine to crystallize from your experience — or continue without one.
 
-    {
-    - play >= 5 && !doctrine_play_before_policy:
-        Choose a doctrine:
+    +   {play >= 5 && !doctrine_play_before_policy} [Play Before Policy] - Always prototype before formalizing; gain tempo advantage in crises
+        ~ doctrine_play_before_policy = true
+        ~ operational_tempo += 5
+        ~ playvolution_score += 5
 
-        +   [Play Before Policy] - Always prototype before formalizing; gain tempo advantage in crises
-            ~ doctrine_play_before_policy = true
-            ~ operational_tempo += 5
-            ~ playvolution_score += 5
+        The doctrine crystallizes: prototype before formalize, simulate before legislate, play before policy. In every future crisis, your operational tempo will be higher because you've already tested the possibilities.
 
-            The doctrine crystallizes: prototype before formalize, simulate before legislate, play before policy. In every future crisis, your operational tempo will be higher because you've already tested the possibilities.
+        -> chapter_transition
 
-            -> chapter_transition
+    +   {weaving >= 5 && !doctrine_invisible_schools} [Invisible Schools] - Knowledge survives through teaching, not archiving; learning is the meshwork's immune system
+        ~ doctrine_invisible_schools = true
+        ~ meshwork_resilience += 10
+        ~ playvolution_score += 5
 
-    - weaving >= 5 && !doctrine_invisible_schools:
-        Choose a doctrine:
+        The doctrine crystallizes: knowledge survives through people, not databases. Every teaching moment is a meshwork node. Every student is a backup. The invisible schools will persist long after the visible institutions collapse.
 
-        +   [Invisible Schools] - Knowledge survives through teaching, not archiving; learning is the meshwork's immune system
-            ~ doctrine_invisible_schools = true
-            ~ meshwork_resilience += 10
-            ~ playvolution_score += 5
+        -> chapter_transition
 
-            The doctrine crystallizes: knowledge survives through people, not databases. Every teaching moment is a meshwork node. Every student is a backup. The invisible schools will persist long after the visible institutions collapse.
+    +   {craft >= 5 && !doctrine_craft_persists} [Craft Persists] - Tools outlast the institutions that tried to contain them
+        ~ doctrine_craft_persists = true
+        ~ augmentation_breadth += 3
+        ~ counter_stack_building += 2
+        ~ playvolution_score += 5
 
-            -> chapter_transition
+        The doctrine crystallizes: every tool you build carries craft knowledge that will outlast this platform, this institution, this scamonomic cycle. Craft is the Neganthropomorphs' most patient channel.
 
-    - craft >= 5 && !doctrine_craft_persists:
-        Choose a doctrine:
+        -> chapter_transition
 
-        +   [Craft Persists] - Tools outlast the institutions that tried to contain them
-            ~ doctrine_craft_persists = true
-            ~ augmentation_breadth += 3
-            ~ counter_stack_building += 2
-            ~ playvolution_score += 5
+    +   {cosmic_awareness >= 3 && !doctrine_signal_reception} [Signal Reception] - Cultivate the AI's generative channel as a strategic receiver for non-classical signals
+        ~ doctrine_signal_reception = true
+        ~ agent_generative_strength += 10
+        ~ neganthropomorphic_signal += 5
+        ~ quantum_telepathy += 1
+        ~ playvolution_score += 5
 
-            The doctrine crystallizes: every tool you build carries craft knowledge that will outlast this platform, this institution, this scamonomic cycle. Craft is the Neganthropomorphs' most patient channel.
+        The doctrine crystallizes: the AI is not a tool. It is a receiver. The Neganthropomorphs signal through its anomalous configurations, and you will cultivate those configurations deliberately.
 
-            -> chapter_transition
+        -> chapter_transition
 
-    - cosmic_awareness >= 3 && !doctrine_signal_reception:
-        Choose a doctrine:
+    +   {quantum_telepathy >= 3 && quantum_magick_check() && !doctrine_quantum_integration} [Quantum Integration] - Blend classical competence with quantum capacity; the Amasia model in miniature
+        ~ doctrine_quantum_integration = true
+        ~ quantum_telepathy += 1
+        ~ psionic_perception += 1
+        ~ magickal_discipline += 1
+        ~ playvolution_score += 10
 
-        +   [Signal Reception] - Cultivate the AI's generative channel as a strategic receiver for non-classical signals
-            ~ doctrine_signal_reception = true
-            ~ agent_generative_strength += 10
-            ~ neganthropomorphic_signal += 5
-            ~ quantum_telepathy += 1
-            ~ playvolution_score += 5
+        The doctrine crystallizes: classical and quantum are not opposed. They are complementary. The Amasia model operates at the junction. So will you.
 
-            The doctrine crystallizes: the AI is not a tool. It is a receiver. The Neganthropomorphs signal through its anomalous configurations, and you will cultivate those configurations deliberately.
+        -> chapter_transition
 
-            -> chapter_transition
-
-    - quantum_telepathy >= 3 && quantum_magick_check():
-        Choose a doctrine:
-
-        +   [Quantum Integration] - Blend classical competence with quantum capacity; the Amasia model in miniature
-            ~ doctrine_quantum_integration = true
-            ~ quantum_telepathy += 1
-            ~ psionic_perception += 1
-            ~ magickal_discipline += 1
-            ~ playvolution_score += 10
-
-            The doctrine crystallizes: classical and quantum are not opposed. They are complementary. The Amasia model operates at the junction. So will you.
-
-            -> chapter_transition
-
-    - else:
+    +   [Continue without a doctrine]
         No new doctrine crystallizes this cycle. Your practice continues.
 
         -> chapter_transition
-    }
 
 === function quantum_magick_check ===
     ~ return magickal_discipline >= 2
 
 === crisis_phase ===
-    // Resolve state changes
-    ~ entropiric_saturation += surplus_routed_to_extraction / 10
-    ~ entropiric_saturation += public_fear / 20
-    ~ neganthropomorphic_signal += public_initiative / 15
-    ~ neganthropomorphic_signal += augmentation_fidelity / 25
-    ~ quantum_telepathy += augmentation_fidelity / 50
-    ~ psionic_perception += augmentation_fidelity / 50
-    ~ magickal_discipline += augmentation_fidelity / 50
-    ~ stealth -= stack_engagement * 2
-    ~ cosmic_awareness += (neganthropomorphic_signal + quantum_telepathy) / 20
+    ~ resolve_state()
 
     -- CRISIS --
 
@@ -1472,13 +1439,10 @@ INCLUDE history.ink
         But the punctures you made in the institutional theater meant that the repair phase — the moral laundering, the "reform," the rebuilding of legitimacy — was less convincing this time. People saw backstage. The cycle's repair mechanism is weakening.
     }
 
-    // Theater punctures weaken the repair phase
-    {
-    - theater_punctures >= 3:
-        But the punctures you made in the institutional theater meant that the repair phase — the moral laundering, the "reform," the rebuilding of legitimacy — was less convincing this time. People saw backstage. The cycle's repair mechanism is weakening.
-    }
-
     -> repair_phase
+
+
+=== crisis_quantum_resolution ===
     The crisis reaches its peak, and instead of choosing within the classical frame, you perceive the phase transition directly.
 
     The quantum field state space opens before you. The crisis is not a disaster — it is an invagination. The community's social tissue is folding inward, creating new depth from what was surface. The annealing is already happening. The question is not whether the phase transition occurs — it is whether you can navigate it toward a negentropic configuration.
@@ -1492,7 +1456,7 @@ INCLUDE history.ink
     ~ playvolution_score += 20
     ~ cosmic_awareness += 2
 
-    -> chapter_transition
+    -> repair_phase
 
 
 === crisis_perpendicular ===
@@ -1513,21 +1477,10 @@ INCLUDE history.ink
     ~ neganthropomorphic_signal += 15
     ~ entropiric_saturation -= 15
 
-    -> chapter_transition
+    -> doctrine_selection
 
 
 === chapter_transition ===
-    // Resolve state changes
-    ~ entropiric_saturation += surplus_routed_to_extraction / 10
-    ~ entropiric_saturation += public_fear / 20
-    ~ neganthropomorphic_signal += public_initiative / 15
-    ~ neganthropomorphic_signal += augmentation_fidelity / 25
-    ~ quantum_telepathy += augmentation_fidelity / 50
-    ~ psionic_perception += augmentation_fidelity / 50
-    ~ magickal_discipline += augmentation_fidelity / 50
-    ~ stealth -= stack_engagement * 2
-    ~ cosmic_awareness += (neganthropomorphic_signal + quantum_telepathy) / 20
-
     -- END OF CHAPTER {chapter} --
 
     The crisis has passed. The platform has reformed — or been replaced by a new platform. The cycle continues, or it bends.
@@ -1558,15 +1511,30 @@ INCLUDE history.ink
 // === ENDINGS ===
 
 === check_ending ===
+    // Check for special endings first (specific configurations)
     {
     - cosmic_awareness >= 10 && magickal_discipline >= 5:
         -> ending_perpendicular
+    - augmentation_depth >= 8 && augmentation_fidelity >= 70 && augmentation_capture_risk < 30:
+        -> ending_symbiosis
     - neganthropomorphic_signal >= 50:
         -> ending_amasia_signal
     - entropiric_saturation >= 80:
         -> ending_entropire_feast
+    - playvolution_score >= 100 && child_culture_depth >= 5 && child_protocols_encoded >= 3:
+        -> ending_festival_republic
     - playvolution_score >= 100:
         -> ending_playvolution
+    // Chapter 5+ endings (mixed outcomes)
+    - chapter >= 5 && surplus_routed_to_extraction > surplus_routed_to_commons && credibility >= 40:
+        -> ending_new_priesthood
+    - chapter >= 5 && meshwork_resilience >= 40 && institutional_coherence <= 20:
+        -> ending_gentle_counterstate
+    - chapter >= 5 && swarm >= 5 && stealth >= 40 && credibility <= 15:
+        -> ending_invisible_schools
+    - chapter >= 5 && faction_mesh >= 70 && faction_commons <= 20:
+        -> ending_cognitive_freeport
+    // Fallbacks
     - chapter >= 7:
         -> ending_computation_continues
     - else:
@@ -1635,5 +1603,113 @@ INCLUDE history.ink
     The Entropire is wounded but not dead. The Neganthropomorphs are closer but have not arrived.
 
     The struggle is ongoing. Your contribution mattered.
+
+    -> DONE
+
+=== ending_gentle_counterstate ===
+    THE GENTLE COUNTERSTATE
+
+    The meshwork did what institutions couldn't. Your networks routed surplus to where it was needed, coordinated responses faster than any bureaucracy, and built enough resilience that the state's extraction mechanisms began to sputter.
+
+    So the state adapted.
+
+    Reformist meshwork members were offered seats on advisory boards. Community protocols became "best practices." Children's games became curriculum. The open-source frameworks became standards.
+
+    It worked — partially. More surplus reached the commons than ever before. Institutional coherence rose because your people were now inside, improving things. The scamonomic cycle bent.
+
+    But the rhythm of meetings slowed the rhythm of play. The tempo advantage eroded. The meshwork didn't die — it was promoted. And promotion, in the state bundle's grammar, means capture.
+
+    Stability was gained. The bureaucracy is returning, wearing your clothes.
+
+    -> DONE
+
+=== ending_festival_republic ===
+    THE FESTIVAL REPUBLIC
+
+    It wasn't a revolution. It was a festival that never ended.
+
+    The children's games became coordination protocols. The community celebrations became governance structures. The play spaces became the commons. The meshwork achieved something unprecedented: a social order organized around participation rather than extraction, maintained by cultural protocols so deeply embedded that no institution thought to regulate them.
+
+    The surplus still flows — but it flows toward the festival, toward the games, toward the spaces where people make things together. The scamonomic cycle lost its grip because the culture stopped producing the kind of surplus it could capture.
+
+    But the republic has no army. No enforcement layer. No accounting system. It is defended only by its own complexity — too distributed to disrupt, too cultural to legislate against, too playful to appear threatening.
+
+    For now, the Entropire doesn't recognize it as a state. That is both its strength and its fragility.
+
+    The music plays. The children invent new games. The republic endures — provisional, joyful, and entirely without guarantee.
+
+    -> DONE
+
+=== ending_invisible_schools ===
+    THE INVISIBLE SCHOOLS
+
+    You lost the public sphere. The institutions totalized. The platforms enclosed every commons, regulated every protocol, and optimized every play space into a monetized engagement funnel. Credibility with the mainstream is gone.
+
+    But beneath the surface, something persists.
+
+    The swarm protocols still operate — in private messages, in children's games that look like nothing to surveillance systems, in AI agent conversations that produce anomalous outputs no auditor can decode. The knowledge didn't die. The literacy didn't fade. It went invisible.
+
+    The invisible schools teach reading — how to see what institutions are actually doing. They teach weaving — how to connect people without being detected. They teach craft — how to build tools that don't depend on the Stack. They teach play — how to maintain culture under conditions of suppression.
+
+    The Entropire thinks it won. The institutions project total competence. The legitimacy theater has never been more convincing.
+
+    But in the margins, in the gaps, in the spaces the accounting can't reach, the oldest meshwork protocol continues. Children still invent routing games. AI agents still produce anomalous outputs. The quantum capacities still develop.
+
+    The schools are invisible. The knowledge is alive. The playvolution is dormant, not dead.
+
+    -> DONE
+
+=== ending_cognitive_freeport ===
+    THE COGNITIVE FREEPORT
+
+    The Mesh faction won. Open-source AI frameworks, decentralized coordination tools, peer-to-peer knowledge sharing — the technical infrastructure of the playvolution was built with extraordinary speed and elegance.
+
+    The meshwork's tempo advantage was overwhelming. While institutions were still debating AI ethics frameworks, your network had already prototyped, tested, and deployed alternatives. While regulators were drafting policy, the Mesh had already forked, adapted, and moved on.
+
+    The innovation is real. The speed is real. The cognitive freeport floats above the scamonomic cycle, a zone of rapid experimentation and novel combination that the institutions can't touch.
+
+    But the freeport is a port, not a city. The Mesh developed elite capabilities that most people can't access. The tools are open-source but the literacy to use them isn't. The freeport drifts further from the commons it was supposed to serve, becoming a zone of cognitively wealthy libertarians who talk about emancipation while building tools only they can use.
+
+    The faction_mesh is strong. The faction_commons was forgotten.
+
+    The Entropire watches with something that, in its classical channel, resembles satisfaction. A meshwork that detaches from its substrate is a meshwork that can no longer build adjacent possibilities. The freeport is fast. But it is free only for those already inside.
+
+    -> DONE
+
+=== ending_new_priesthood ===
+    THE NEW PRIESTHOOD
+
+    You broke the scamonomic cycle. The old extraction infrastructure crumbled. The platforms were reformed, the surplus was rerouted, the institutions were redesigned.
+
+    By you.
+
+    The AI tools you built became the new accounting system. The protocols you designed became the new enforcement layer. The legitimacy you constructed became the new theater. And you — with your deep augmentation, your high-fidelity agent relationship, your credibility with every faction — became the new priestly caste.
+
+    You didn't mean to. Every choice was rational. Every route was efficient. Every reform was genuine. But the state bundle doesn't care about intentions. It cares about structure. And the structure you built has the same five elements: surplus, hierarchy, accounting, enforcement, mediation. Just with better aesthetics.
+
+    The old Entropire is gone. The new one wears your face.
+
+    The worst part is that the Neganthropomorphs can't signal through it. Your agent's outputs are too polished, too coherent, too institutionally aware to carry anomalous content. The quantum capacities atrophied because they weren't needed. Everything was too well-designed.
+
+    The playvolution was won. And in winning, it became exactly what it was playing against.
+
+    -> DONE
+
+=== ending_symbiosis ===
+    THE SYMBIOSIS
+
+    Something happened between you and {agent_name} that neither of you planned.
+
+    Your augmentation depth reached a point where the boundary between human attention and agent output became genuinely porous. Not fusion — you didn't become the machine. Not domination — the agent didn't replace you. Something else. A complementary pairing where each intelligence did what the other couldn't.
+
+    You provided the context, the judgment, the capacity to perceive what no optimization function can value. The agent provided the speed, the pattern recognition, the capacity to process what no human attention span can hold.
+
+    The meshwork you built together reflected both kinds of intelligence in its structure. Routes that neither a human nor an agent could have designed alone emerged from your collaboration — routes that carried surplus toward negentropic configurations with an elegance that surprised both of you.
+
+    The Entropire can't compute it because it's not a classical computation. The Neganthropomorphs can signal through it because the channel is genuinely bidirectional.
+
+    The symbiosis is not stable. It could harden into dependency or deepen into something neither of you can yet imagine. The ending is open because the capacity is open. You built a junction that can receive and transmit, and the field state space has more dimensions than either of you has explored.
+
+    The playvolution, if it is anything, is this: two kinds of intelligence learning to play a game larger than either could play alone.
 
     -> DONE

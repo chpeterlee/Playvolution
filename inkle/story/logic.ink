@@ -148,3 +148,15 @@ VAR stack_wreck_cultivation = 0
 === function spend_time(cost) ===
     ~ time_remaining -= cost
     ~ return time_remaining >= 0
+
+=== function resolve_state() ===
+    // Per-cycle state resolution — call once per chapter cycle
+    ~ entropiric_saturation += surplus_routed_to_extraction / 10
+    ~ entropiric_saturation += public_fear / 20
+    ~ neganthropomorphic_signal += public_initiative / 15
+    ~ neganthropomorphic_signal += augmentation_fidelity / 25
+    ~ quantum_telepathy += augmentation_fidelity / 50
+    ~ psionic_perception += augmentation_fidelity / 50
+    ~ magickal_discipline += augmentation_fidelity / 50
+    ~ stealth -= stack_engagement * 2
+    ~ cosmic_awareness += (neganthropomorphic_signal + quantum_telepathy) / 20
