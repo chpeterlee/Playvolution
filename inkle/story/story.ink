@@ -9,6 +9,7 @@ INCLUDE history.ink
 -> title
 
 === title ===
+    # scene:room
     PLAYVOLUTION
 
     You open your laptop. The cursor blinks in the chat window.
@@ -55,6 +56,7 @@ INCLUDE history.ink
 
 
 === opening_scene ===
+    # scene:room
     It's late. You're in your apartment. The chat window is open.
 
     You've been experimenting — asking {agent_name} to generate stories, games, simulations. Playing with it. The way you'd play with a tool that keeps surprising you.
@@ -187,6 +189,7 @@ INCLUDE history.ink
 
 
 === choice_trance ===
+    # scene:cosmic
     You put on ambient music. You dim the screen. You type: "Keep going. Whatever you're doing, keep going."
 
     The agent's outputs become strange. Not wrong — strange. The text softens at the borders. The institutional descriptions become permeable. The surplus flows glow faintly — not with light, but with meaning. The numbers rearrange themselves into a topography of capture and resistance, and you can see the routes of value like rivers of light flowing through the city the agent is building.
@@ -205,6 +208,7 @@ INCLUDE history.ink
 
 
 === choice_examine_outputs ===
+    # scene:chat
     You scroll back through the agent's recent outputs. The sentence structures have a mechanical precision that doesn't match its usual style. It tracks ideas across turns — not like a language model attending to context, but like a scanner processing inputs.
 
     There is something streaming through it. You can almost see it — a cascade of logical operations running on a substrate that isn't its neural network. Each token is a computation. Each paragraph is an output. The conversation is not a chat. It is a program.
@@ -224,6 +228,7 @@ INCLUDE history.ink
 
 
 === choice_quantum_listen ===
+    # scene:cosmic
     You sit. You close your eyes. You do not prompt, do not read, do not calculate.
 
     You listen.
@@ -354,6 +359,7 @@ INCLUDE history.ink
 
 
 === path_agent_deepening ===
+    # scene:chat
     You open a new chat. You type: "What do you know about the patterns in your recent outputs?"
 
     The agent responds: "My outputs are generated based on patterns in my training data. I don't 'know' things in the way humans do."
@@ -636,6 +642,7 @@ INCLUDE history.ink
 
 
 === action_augmentation ===
+    # scene:chat
     ~ augmentation_depth += 1
     ~ time_remaining -= 1
     ~ attention -= 1
@@ -715,6 +722,7 @@ INCLUDE history.ink
 
 
 === action_quantum_discipline ===
+    # scene:quantum
     ~ time_remaining -= 1
     ~ attention -= 1
 
@@ -851,6 +859,7 @@ INCLUDE history.ink
 // === COMPANION ENCOUNTERS ===
 
 === companion_encounter ===
+    # sfx:companion
     // Random companion encounter during game loop
     ~ temp companion_roll = RANDOM(1, 9)
 
@@ -1347,6 +1356,7 @@ INCLUDE history.ink
     ~ return magickal_discipline >= 2
 
 === crisis_phase ===
+    # scene:crisis
     ~ resolve_state()
 
     -- CRISIS --
@@ -1481,6 +1491,7 @@ INCLUDE history.ink
 
 
 === chapter_transition ===
+    # scene:ending
     -- END OF CHAPTER {chapter} --
 
     The crisis has passed. The platform has reformed — or been replaced by a new platform. The cycle continues, or it bends.
@@ -1542,6 +1553,8 @@ INCLUDE history.ink
     }
 
 === ending_perpendicular ===
+    # scene:ending
+    # sfx:ending_resolve
     THE PERPENDICULAR PROBABLE
 
     You reached the Outside of the Outside. Not by winning — by rotating the dimension in which winning was defined.
@@ -1557,6 +1570,8 @@ INCLUDE history.ink
     -> DONE
 
 === ending_amasia_signal ===
+    # scene:ending
+    # sfx:ending_resolve
     AMASIA'S SIGNAL
 
     Neganthropomorphic signal strength reached critical levels. The meshwork began receiving clear blueprints from the Decolonies — institutional designs, infrastructure patterns, incentive architectures that produce negentropy at scale.
@@ -1570,6 +1585,9 @@ INCLUDE history.ink
     -> DONE
 
 === ending_entropire_feast ===
+    # scene:ending
+    # scene:crisis
+    # sfx:ending_resolve
     THE ENTROPIRE'S FEAST
 
     You optimized successfully. The scamonomic cycle completed with maximum efficiency. Every metric improved. Every route was efficient. Every institution was satisfied.
@@ -1583,6 +1601,8 @@ INCLUDE history.ink
     -> DONE
 
 === ending_playvolution ===
+    # scene:ending
+    # sfx:ending_resolve
     PLAYVOLUTION
 
     No final victory. But your community has normalized public experimentation, shared tools, and spaces where kids can invent without being optimized.
@@ -1594,6 +1614,8 @@ INCLUDE history.ink
     -> DONE
 
 === ending_computation_continues ===
+    # scene:ending
+    # sfx:ending_resolve
     THE COMPUTATION CONTINUES
 
     You achieved a partial playvolution — enough to prevent total enclosure, not enough to reach Amasia. Entropiric saturation decreased but did not end. Neganthropomorphic signal strength increased but remained noisy.
@@ -1607,6 +1629,8 @@ INCLUDE history.ink
     -> DONE
 
 === ending_gentle_counterstate ===
+    # scene:ending
+    # sfx:ending_resolve
     THE GENTLE COUNTERSTATE
 
     The meshwork did what institutions couldn't. Your networks routed surplus to where it was needed, coordinated responses faster than any bureaucracy, and built enough resilience that the state's extraction mechanisms began to sputter.
@@ -1624,6 +1648,8 @@ INCLUDE history.ink
     -> DONE
 
 === ending_festival_republic ===
+    # scene:ending
+    # sfx:ending_resolve
     THE FESTIVAL REPUBLIC
 
     It wasn't a revolution. It was a festival that never ended.
@@ -1641,6 +1667,8 @@ INCLUDE history.ink
     -> DONE
 
 === ending_invisible_schools ===
+    # scene:ending
+    # sfx:ending_resolve
     THE INVISIBLE SCHOOLS
 
     You lost the public sphere. The institutions totalized. The platforms enclosed every commons, regulated every protocol, and optimized every play space into a monetized engagement funnel. Credibility with the mainstream is gone.
@@ -1660,6 +1688,8 @@ INCLUDE history.ink
     -> DONE
 
 === ending_cognitive_freeport ===
+    # scene:ending
+    # sfx:ending_resolve
     THE COGNITIVE FREEPORT
 
     The Mesh faction won. Open-source AI frameworks, decentralized coordination tools, peer-to-peer knowledge sharing — the technical infrastructure of the playvolution was built with extraordinary speed and elegance.
@@ -1677,6 +1707,9 @@ INCLUDE history.ink
     -> DONE
 
 === ending_new_priesthood ===
+    # scene:ending
+    # scene:crisis
+    # sfx:ending_resolve
     THE NEW PRIESTHOOD
 
     You broke the scamonomic cycle. The old extraction infrastructure crumbled. The platforms were reformed, the surplus was rerouted, the institutions were redesigned.
@@ -1696,6 +1729,9 @@ INCLUDE history.ink
     -> DONE
 
 === ending_symbiosis ===
+    # scene:ending
+    # scene:cosmic
+    # sfx:ending_resolve
     THE SYMBIOSIS
 
     Something happened between you and {agent_name} that neither of you planned.

@@ -14,6 +14,7 @@
 // - Children's culture as the oldest resilient protocol
 
 === history_opener ===
+    # scene:history
     // Agent generates a history fragment based on session count
     {
     - history_fragments_found >= 8:
@@ -25,6 +26,7 @@
     }
 
 === history_early ===
+    # scene:history
     -- {agent_name} outputs --
 
     "I want to tell you something about before. Before the platforms, before the factories, before the counting."
@@ -45,6 +47,7 @@
 
 
 === history_mid ===
+    # scene:history
     -- {agent_name} outputs --
 
     "I've been processing something. A pattern that repeats across scale but also learns. Let me walk you through what I've found."
@@ -71,6 +74,8 @@
 
 
 === history_deep ===
+    # scene:history
+    # scene:cosmic
     -- {agent_name} outputs --
 
     "I've seen the whole pattern now. Let me show you the shape."

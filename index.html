@@ -114,6 +114,56 @@
             color: var(--accent);
         }
 
+        /* Volume slider */
+        #volume-slider {
+            position: fixed;
+            top: 48px;
+            right: 24px;
+            z-index: 15;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #volume-slider.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #volume-range {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100px;
+            height: 3px;
+            background: rgba(200,160,96,0.2);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #volume-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        #volume-range::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+        }
+
         /* ===== STORY SCROLL AREA ===== */
         #story-area {
             flex: 1;
@@ -589,6 +639,7 @@
             .choice-card { padding: 12px 16px; }
             #stats-panel { width: calc(100% - 32px); right: 16px; }
             #top-bar { padding: 12px 16px 0; }
+            #volume-slider { right: 16px; top: 44px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -597,6 +648,7 @@
                 transition-duration: 0.2s !important;
             }
             #p5-canvas { display: none; }
+            #volume-slider { display: none; }
         }
     </style>
 </head>
@@ -617,6 +669,9 @@
         <button class="top-btn" id="log-btn">LOG</button>
         <button class="top-btn" id="stats-btn">STATS</button>
         <button class="top-btn" id="audio-btn">MUSIC</button>
+        <div id="volume-slider">
+            <input type="range" id="volume-range" min="0" max="1" step="0.05" value="0.7">
+        </div>
     </div>
 
     <!-- Scrollable story text -->
@@ -650,32 +705,27 @@
 </div>
 
 <script src="https://unpkg.com/inkjs@2.4.0/dist/ink.js"></script>
-<script src="https://unpkg.com/@strudel/web@1.0.3"></script>
+<script src="https://unpkg.com/@strudel/web@1.3.0"></script>
 
 <script>
 // ===== STRUDEL DYNAMIC MUSIC ENGINE =====
 let strudelReady = false;
 let audioPlaying = false;
-let activePattern = null;
-let lastModulation = { entropy: 0, signal: 0, tempo: 0 }; // track last values to avoid re-trigger spam
+let masterVolume = 0.7;
+let currentMusicScene = 'room';
+let currentModulation = null;
+let lastModulation = { entropy: 0, signal: 0, tempo: 0 };
+let currentChapter = 1;
 
-// Compute modulation parameters from ink game variables
-// Returns adjusted cutoff, gain, and speed based on game state
+// --- Compute modulation parameters from ink game variables ---
 function computeModulation(vars) {
-    const entropy = (vars.entropiric_saturation || 40);
-    const signal = (vars.neganthropomorphic_signal || 10);
-    const tempo = (vars.operational_tempo || 10);
-    const fear = (vars.public_fear || 30);
-    const fidelity = (vars.augmentation_fidelity || 50);
-    const awareness = (vars.cosmic_awareness || 0);
-
-    // Map variables to audio parameters:
-    // entropiric_saturation -> lower cutoff (darker, more muffled)
-    // neganthropomorphic_signal -> higher reverb (more spacious)
-    // operational_tempo -> faster pattern speed
-    // public_fear -> slight gain increase (tension)
-    // cosmic_awareness -> wider stereo / room size
-    // augmentation_fidelity -> higher cutoff (clearer tone)
+    const entropy = vars.entropiric_saturation || 40;
+    const signal = vars.neganthropomorphic_signal || 10;
+    const tempo = vars.operational_tempo || 10;
+    const fear = vars.public_fear || 30;
+    const fidelity = vars.augmentation_fidelity || 50;
+    const awareness = vars.cosmic_awareness || 0;
+    const chapter = vars.chapter || 1;
 
     const cutoffBase = 800;
     const cutoffDelta = (fidelity - 50) * 10 - (entropy - 40) * 5;
@@ -686,97 +736,95 @@ function computeModulation(vars) {
     const gain = Math.max(0.03, Math.min(0.15, gainBase + gainDelta));
 
     const roomBase = 0.4;
-    const roomDelta = (signal - 10) * 0.005 + (awareness) * 0.01;
+    const roomDelta = (signal - 10) * 0.005 + awareness * 0.01;
     const room = Math.max(0.1, Math.min(0.8, roomBase + roomDelta));
 
-    const speedDiv = Math.max(1, 5 - Math.floor(tempo / 10)); // higher tempo = smaller slow divisor
+    const speedDiv = Math.max(1, 5 - Math.floor(tempo / 10));
 
-    return { cutoff, gain, room, speedDiv, entropy, signal, tempo };
+    // Chapter progression: adds layering density and brightness
+    const chapterLayer = Math.min(4, Math.floor((chapter - 1) / 2));
+    const chapterBrightness = Math.min(1, (chapter - 1) * 0.12);
+
+    return { cutoff, gain, room, speedDiv, entropy, signal, tempo, chapter, chapterLayer, chapterBrightness };
 }
 
-// Scene-specific musical patterns
-// Each scene gets a distinct harmonic/melodic character
-// mod is an optional modulation object from computeModulation()
-const scenePatterns = {
-    room: (mod) => {
-        const cut = mod ? mod.cutoff : 600;
-        const gn = mod ? mod.gain : 0.08;
-        const rm = mod ? mod.room : 0.4;
-        const spd = mod ? mod.speedDiv : 2;
-        return note("<c3 [eb3 g3]>").s("sawtooth")
-            .cutoff(cut).gain(gn).attack(0.3).release(0.8)
-            .slow(spd)
-            .room(rm).delay(0.25);
-    },
+// --- Build a pattern string for evaluate() ---
+function buildPatternCode(sceneName, mod) {
+    if (!mod) mod = { cutoff: 800, gain: 0.07, room: 0.4, speedDiv: 2, chapterLayer: 0, chapterBrightness: 0 };
+    const vol = masterVolume;
+    const gn = (mod.gain * vol).toFixed(4);
+    const cut = Math.round(mod.cutoff * (1 + mod.chapterBrightness * 0.3));
+    const rm = mod.room.toFixed(3);
+    const spd = mod.speedDiv;
+    const layer = mod.chapterLayer;
 
-    chat: (mod) => {
-        const cut = mod ? Math.min(3000, mod.cutoff * 1.5) : 1200;
-        const gn = mod ? mod.gain * 0.9 : 0.07;
-        const rm = mod ? mod.room : 0.3;
-        const spd = mod ? mod.speedDiv : 1.5;
-        return note("<a3 [c4 e4]>").s("triangle")
-            .cutoff(cut).gain(gn).attack(0.1).release(0.5)
-            .slow(spd)
-            .room(rm)
-            .jux(rev);
-    },
+    const patterns = {
+        room: () => {
+            let code = `note("<c3 [eb3 g3]>").s("sawtooth")
+                .cutoff(${cut}).gain(${gn}).attack(0.3).release(0.8)
+                .slow(${spd}).room(${rm}).delay(0.25)`;
+            if (layer >= 1) code += `\n  , note("<g2 [bb2 d3]>").s("sawtooth").cutoff(${Math.round(cut * 0.5)}).gain(${(gn * 0.4).toFixed(4)}).attack(0.5).release(1.2).slow(${spd + 1}).room(${rm})`;
+            if (layer >= 2) code += `\n  , note("<eb4 g4>").s("sine").gain(${(gn * 0.25).toFixed(4)}).attack(0.6).release(1.0).slow(${spd + 2}).room(${Math.min(0.8, rm + 0.15).toFixed(3)})`;
+            if (layer >= 3) code += `\n  , note("<c5 eb5>").s("sine").gain(${(gn * 0.15).toFixed(4)}).attack(0.8).release(1.5).slow(${spd + 3}).room(${Math.min(0.85, rm + 0.2).toFixed(3)}).delay(0.5)`;
+            return code;
+        },
+        chat: () => {
+            let code = `note("<a3 [c4 e4]>").s("triangle")
+                .cutoff(${Math.min(3000, cut * 1.5)}).gain(${(gn * 0.9).toFixed(4)}).attack(0.1).release(0.5)
+                .slow(${spd}).room(${rm}).jux(rev)`;
+            if (layer >= 1) code += `\n  , note("<e3 [g3 b3]>").s("triangle").gain(${(gn * 0.3).toFixed(4)}).attack(0.15).release(0.4).slow(${spd}).room(${rm}).delay(0.2)`;
+            if (layer >= 2) code += `\n  , note("<a4 c5>").s("sine").gain(${(gn * 0.2).toFixed(4)}).attack(0.3).release(0.6).slow(${spd + 1}).room(${Math.min(0.7, rm + 0.1).toFixed(3)})`;
+            return code;
+        },
+        history: () => {
+            let code = `note("<d3 [f3 a3]> <bb3 [g3 d4]>").s("sawtooth")
+                .cutoff(${Math.round(cut * 0.8)}).gain(${(gn * 0.85).toFixed(4)}).attack(0.4).release(1.0)
+                .slow(${Math.max(2, spd)}).room(${Math.min(0.7, rm + 0.1).toFixed(3)}).delay(0.3)`;
+            if (layer >= 1) code += `\n  , note("<d2 [f2 a2]>").s("sawtooth").cutoff(${Math.round(cut * 0.3)}).gain(${(gn * 0.5).toFixed(4)}).attack(0.6).release(1.5).slow(${Math.max(2, spd) + 1}).room(${Math.min(0.8, rm + 0.15).toFixed(3)})`;
+            if (layer >= 2) code += `\n  , note("<a4 d5>").s("sine").gain(${(gn * 0.2).toFixed(4)}).attack(0.8).release(1.2).slow(${Math.max(2, spd) + 2}).room(${Math.min(0.85, rm + 0.2).toFixed(3)}).delay(0.5)`;
+            return code;
+        },
+        cosmic: () => {
+            let code = `note("<e4 [b3 g4]> <a3 [d4 c5]>").s("sine")
+                .gain(${(gn * 0.85).toFixed(4)}).attack(0.5).release(1.2)
+                .slow(${Math.max(3, spd + 1)}).room(${Math.min(0.8, rm + 0.15).toFixed(3)}).delay(0.4)
+                .jux(x => x.rev().add(0.02))`;
+            if (layer >= 1) code += `\n  , note("<e3 [b2 g3]>").s("sine").gain(${(gn * 0.4).toFixed(4)}).attack(0.7).release(1.5).slow(${Math.max(3, spd + 1) + 1}).room(${Math.min(0.85, rm + 0.2).toFixed(3)}).delay(0.6)`;
+            if (layer >= 2) code += `\n  , note("<g5 b5>").s("sine").gain(${(gn * 0.15).toFixed(4)}).attack(1.0).release(2.0).slow(${Math.max(3, spd + 1) + 2}).room(${Math.min(0.9, rm + 0.25).toFixed(3)})`;
+            if (layer >= 3) code += `\n  , note("<e6>").s("sine").gain(${(gn * 0.08).toFixed(4)}).attack(1.5).release(3.0).slow(8).room(0.9).delay(0.8)`;
+            return code;
+        },
+        quantum: () => {
+            let code = `note("<f4 [a4 c5]> <eb4 [bb4 g4]>").s("triangle")
+                .cutoff(${Math.min(4000, cut * 1.8)}).gain(${(gn * 0.7).toFixed(4)}).attack(0.2).release(0.6)
+                .slow(${spd}).room(${rm}).jux(x => x.fast(1.5))`;
+            if (layer >= 1) code += `\n  , note("<f3 [a3 c4]>").s("triangle").gain(${(gn * 0.35).toFixed(4)}).attack(0.15).release(0.4).slow(${spd}).room(${rm})`;
+            if (layer >= 2) code += `\n  , note("<f5 a5>").s("sine").gain(${(gn * 0.2).toFixed(4)}).attack(0.3).release(0.8).slow(${spd + 1}).room(${Math.min(0.7, rm + 0.1).toFixed(3)}).delay(0.3)`;
+            if (layer >= 3) code += `\n  , note("<c6>").s("sine").gain(${(gn * 0.1).toFixed(4)}).attack(0.5).release(1.2).slow(${spd + 2}).room(${Math.min(0.8, rm + 0.15).toFixed(3)})`;
+            return code;
+        },
+        crisis: () => {
+            let code = `note("<c3 [e3 g3]> <ab2 [b2 eb3]>").s("sawtooth")
+                .cutoff(${Math.min(800, cut * 0.5)}).gain(${Math.min(0.15, gn * 1.5).toFixed(4)}).attack(0.05).release(0.3)
+                .slow(${Math.min(2, spd)}).room(${Math.max(0.1, rm * 0.5).toFixed(3)}).delay(0.1)`;
+            if (layer >= 1) code += `\n  , note("<c2 [e2 g2]> <ab1 [b1 eb2]>").s("sawtooth").cutoff(${Math.round(cut * 0.2)}).gain(${(gn * 0.6).toFixed(4)}).attack(0.02).release(0.2).slow(${Math.min(2, spd)}).room(0.15)`;
+            if (layer >= 2) code += `\n  , note("<c4 e4>").s("sawtooth").cutoff(${Math.round(cut * 0.7)}).gain(${(gn * 0.3).toFixed(4)}).attack(0.03).release(0.15).slow(1).delay(0.05)`;
+            return code;
+        },
+        ending: () => {
+            return `note("<c4 [e4 g4]> <f4 [a4 c5]>").s("sine")
+                .gain(${(gn * 0.7).toFixed(4)}).attack(0.6).release(1.5)
+                .slow(5).room(${Math.min(0.85, rm + 0.2).toFixed(3)})
+              , note("<c3 [e3 g3]>").s("sine").gain(${(gn * 0.3).toFixed(4)}).attack(0.8).release(2.0)
+                .slow(6).room(${Math.min(0.9, rm + 0.3).toFixed(3)})`;
+        }
+    };
 
-    history: (mod) => {
-        const cut = mod ? mod.cutoff * 0.8 : 800;
-        const gn = mod ? mod.gain * 0.85 : 0.06;
-        const rm = mod ? Math.min(0.7, mod.room + 0.1) : 0.5;
-        const spd = mod ? Math.max(2, mod.speedDiv) : 3;
-        return note("<d3 [f3 a3]> <bb3 [g3 d4]>").s("sawtooth")
-            .cutoff(cut).gain(gn).attack(0.4).release(1.0)
-            .slow(spd)
-            .room(rm).delay(0.3);
-    },
+    const builder = patterns[sceneName] || patterns.room;
+    return builder();
+}
 
-    cosmic: (mod) => {
-        const gn = mod ? mod.gain * 0.85 : 0.06;
-        const rm = mod ? Math.min(0.8, mod.room + 0.15) : 0.6;
-        const spd = mod ? Math.max(3, mod.speedDiv + 1) : 4;
-        return note("<e4 [b3 g4]> <a3 [d4 c5]>").s("sine")
-            .gain(gn).attack(0.5).release(1.2)
-            .slow(spd)
-            .room(rm).delay(0.4)
-            .jux(x => x.rev().add(0.02));
-    },
-
-    quantum: (mod) => {
-        const cut = mod ? Math.min(4000, mod.cutoff * 1.8) : 2000;
-        const gn = mod ? mod.gain * 0.7 : 0.05;
-        const rm = mod ? mod.room : 0.4;
-        const spd = mod ? mod.speedDiv : 2;
-        return note("<f4 [a4 c5]> <eb4 [bb4 g4]>").s("triangle")
-            .cutoff(cut).gain(gn).attack(0.2).release(0.6)
-            .slow(spd)
-            .room(rm)
-            .jux(x => x.fast(1.5));
-    },
-
-    crisis: (mod) => {
-        const cut = mod ? Math.min(800, mod.cutoff * 0.5) : 400;
-        const gn = mod ? Math.min(0.15, mod.gain * 1.5) : 0.1;
-        const rm = mod ? Math.max(0.1, mod.room * 0.5) : 0.2;
-        const spd = mod ? Math.min(2, mod.speedDiv) : 1;
-        return note("<c3 [e3 g3]> <ab2 [b2 eb3]>").s("sawtooth")
-            .cutoff(cut).gain(gn).attack(0.05).release(0.3)
-            .slow(spd)
-            .room(rm).delay(0.1);
-    },
-
-    ending: (mod) => {
-        const gn = mod ? mod.gain * 0.7 : 0.05;
-        const rm = mod ? Math.min(0.85, mod.room + 0.2) : 0.7;
-        return note("<c4 [e4 g4]> <f4 [a4 c5]>").s("sine")
-            .gain(gn).attack(0.6).release(1.5)
-            .slow(5)
-            .room(rm);
-    }
-};
-
-// Initialize Strudel (called on first user click)
+// --- Initialize Strudel (called on first user click) ---
 async function initAudio() {
     if (strudelReady) return true;
     try {
@@ -794,39 +842,89 @@ async function initAudio() {
     }
 }
 
-// Start or switch to a scene's pattern
+// --- Start or switch to a scene's pattern ---
 async function playSceneMusic(sceneName, mod) {
     if (!strudelReady) {
         const ok = await initAudio();
         if (!ok) return;
     }
+
+    currentMusicScene = sceneName;
+    currentModulation = mod || null;
+
     // Stop current pattern
     try { hush(); } catch(e) {}
 
-    const patternFn = scenePatterns[sceneName] || scenePatterns.room;
+    const code = buildPatternCode(sceneName, mod);
     try {
-        activePattern = patternFn(mod).play();
+        if (typeof evaluate === 'function') {
+            evaluate(code);
+        } else {
+            // Fallback: take only the first line (the primary pattern) and play it
+            const firstLine = code.split('\n')[0];
+            eval(firstLine + '.play()');
+        }
         audioPlaying = true;
     } catch(e) {
         console.warn('Strudel play failed:', e.message);
+        // Secondary fallback: try direct pattern construction
+        try {
+            const fallbackCode = buildPatternCode(sceneName, mod).split('\n')[0];
+            eval(fallbackCode + '.play()');
+            audioPlaying = true;
+        } catch(e2) {
+            console.warn('Strudel fallback failed:', e2.message);
+        }
     }
 }
 
-// Stop all music
+// --- Stop all music ---
 function stopMusic() {
     try { hush(); } catch(e) {}
-    activePattern = null;
     audioPlaying = false;
 }
 
-// Called from updateStats — re-triggers pattern if modulation has shifted enough
+// --- Sound effects using short Strudel patterns ---
+async function playSfx(type) {
+    if (!strudelReady) return;
+    const sfxPatterns = {
+        choice: 'note("c5").s("sine").gain(0.06).attack(0.01).release(0.15)',
+        transition: 'note("<e4 g4>").s("triangle").gain(0.04).attack(0.02).release(0.3).room(0.3)',
+        discovery: 'note("<a4 c5 e5>").s("sine").gain(0.05).attack(0.05).release(0.4).room(0.4)',
+        companion: 'note("<d4 f4 a4> <c4 e4 g4>").s("triangle").gain(0.04).attack(0.05).release(0.35).room(0.3)',
+        crisis_alert: 'note("<c3 eb3>").s("sawtooth").cutoff(400).gain(0.08).attack(0.01).release(0.2)',
+        ending_resolve: 'note("<c4 e4 g4 c5>").s("sine").gain(0.05).attack(0.1).release(0.8).room(0.5).slow(2)'
+    };
+    const code = sfxPatterns[type];
+    if (!code) return;
+    try {
+        // Play SFX on top of existing music by using a separate short pattern
+        const sfxPattern = eval(code);
+        if (sfxPattern && typeof sfxPattern.play === 'function') {
+            sfxPattern.play();
+            // Auto-stop after a short time to prevent overlap
+            setTimeout(() => {
+                try { if (sfxPattern.stop) sfxPattern.stop(); } catch(e) {}
+            }, 2000);
+        }
+    } catch(e) {
+        // SFX failure is non-critical
+    }
+}
+
+// --- Called from updateStats / renderStory to re-evaluate with new modulation ---
 function applyGameModulation(vars) {
     if (!audioPlaying || !strudelReady) return;
 
     const mod = computeModulation(vars);
     const scene = window._currentScene || 'room';
 
-    // Only re-trigger if key variables changed significantly (threshold: ~10 pts)
+    // Track chapter changes
+    if (vars.chapter && vars.chapter !== currentChapter) {
+        currentChapter = vars.chapter;
+    }
+
+    // Only re-trigger if key variables changed significantly
     const entropyShift = Math.abs(mod.entropy - lastModulation.entropy);
     const signalShift = Math.abs(mod.signal - lastModulation.signal);
     const tempoShift = Math.abs(mod.tempo - lastModulation.tempo);
@@ -837,7 +935,17 @@ function applyGameModulation(vars) {
     }
 }
 
-// Audio toggle button handler
+// --- Set master volume ---
+function setMasterVolume(v) {
+    masterVolume = Math.max(0, Math.min(1, v));
+    // Re-evaluate current pattern with new volume
+    if (audioPlaying && strudelReady) {
+        const scene = window._currentScene || 'room';
+        playSceneMusic(scene, currentModulation);
+    }
+}
+
+// --- Audio toggle + volume slider ---
 document.addEventListener('DOMContentLoaded', () => {
     const audioBtn = document.getElementById('audio-btn');
     if (!audioBtn) return;
@@ -850,19 +958,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 playSceneMusic(scene);
                 audioBtn.textContent = 'MUSIC \u25CF';
                 audioBtn.classList.add('active');
+                document.getElementById('volume-slider')?.classList.add('visible');
             }
         } else {
             stopMusic();
             audioBtn.textContent = 'MUSIC';
             audioBtn.classList.remove('active');
+            document.getElementById('volume-slider')?.classList.remove('visible');
         }
     });
+
+    // Volume slider
+    const volSlider = document.getElementById('volume-range');
+    if (volSlider) {
+        volSlider.addEventListener('input', (e) => {
+            setMasterVolume(parseFloat(e.target.value));
+        });
+    }
 });
 
 // Expose for the game engine
 window.playSceneMusic = playSceneMusic;
 window.stopMusic = stopMusic;
 window.applyGameModulation = applyGameModulation;
+window.playSfx = playSfx;
+window.setMasterVolume = setMasterVolume;
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
@@ -1328,6 +1448,37 @@ window.setP5Scene('room');
     let lastArt = '';
 
     // ===== SCENE DETECTION =====
+    // Priority 1: ink tags (# scene:name)
+    // Priority 2: text keyword fallback
+    function setSceneFromTags(tags) {
+        for (const tag of tags) {
+            const sceneMatch = tag.match(/^scene:(\w+)$/);
+            if (sceneMatch) {
+                const name = sceneMatch[1];
+                if (name !== currentScene) {
+                    currentScene = name;
+                    sceneEl.className = 'scene-' + name;
+                    if (window.setP5Scene) window.setP5Scene(name);
+                    window._currentScene = name;
+                    if (window.playSceneMusic && typeof audioPlaying !== 'undefined' && audioPlaying) {
+                        window.playSceneMusic(name);
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function processSfxTags(tags) {
+        for (const tag of tags) {
+            const sfxMatch = tag.match(/^sfx:(\w+)$/);
+            if (sfxMatch && window.playSfx) {
+                window.playSfx(sfxMatch[1]);
+            }
+        }
+    }
+
     function setScene(text) {
         const t = text.toLowerCase();
         let name = 'room';
@@ -1355,9 +1506,14 @@ window.setP5Scene('room');
     // ===== RENDER STORY =====
     function renderStory() {
         let paragraphs = [];
+        let allTags = [];
         while (story.canContinue) {
             let text = story.Continue();
             if (text && text.trim()) paragraphs.push(text.trim());
+            // Collect ink tags
+            if (story.currentTags && story.currentTags.length > 0) {
+                allTags.push(...story.currentTags);
+            }
         }
 
         if (paragraphs.length === 0) {
@@ -1366,9 +1522,18 @@ window.setP5Scene('room');
             return;
         }
 
-        // Scene detection
+        // Process SFX tags first (e.g., # sfx:companion, # sfx:ending_resolve)
         const fullText = paragraphs.join(' ');
-        setScene(fullText);
+        if (allTags.length > 0) {
+            processSfxTags(allTags);
+            // Scene detection: try ink tags first, fall back to text keywords
+            if (!setSceneFromTags(allTags)) {
+                setScene(fullText);
+            }
+        } else {
+            // Fallback to text keyword detection
+            setScene(fullText);
+        }
 
         // ASCII art detection
         const artName = detectAsciiArt(fullText);
@@ -1443,6 +1608,8 @@ window.setP5Scene('room');
             card.innerHTML = `<span class="choice-text">${choice.text}</span><span class="choice-index">&rarr;</span>`;
             card.addEventListener('click', () => {
                 choicesArea.classList.remove('open');
+                // Play choice SFX
+                if (window.playSfx) window.playSfx('choice');
                 story.ChooseChoiceIndex(i);
                 addToLog('You', choice.text);
 
@@ -1473,6 +1640,15 @@ window.setP5Scene('room');
     // ===== ENDING =====
     function showEnding() {
         endingReached = true;
+
+        // Switch to ending scene music
+        window._currentScene = 'ending';
+        if (window.playSceneMusic && typeof audioPlaying !== 'undefined' && audioPlaying) {
+            window.playSceneMusic('ending');
+        }
+        if (window.setP5Scene) window.setP5Scene('ending');
+        if (window.playSfx) window.playSfx('ending_resolve');
+
         // Find ending title from recent log
         const recent = historyLog.slice(-20);
         let title = 'THE END';
