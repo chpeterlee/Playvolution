@@ -465,7 +465,7 @@ body {
 
 #choices-area.open {
     display: block;
-    overflow: visible;
+    overflow-y: auto;
     position: relative;
     z-index: 50;
 }
@@ -473,6 +473,9 @@ body {
 #choices-inner {
     max-width: 680px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
 }
 
 .choice-card {
