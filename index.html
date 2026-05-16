@@ -367,6 +367,44 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             margin: 2px 0;
         }
+        /* Inline category headers */
+        .stat-inline-cat {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 6px 0 2px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            margin-top: 4px;
+        }
+        .stat-inline-cat-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .stat-inline-cat-desc {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            color: rgba(160, 160, 160, 0.4);
+            font-style: italic;
+        }
+        .stat-inline-cat.cat-personal .stat-inline-cat-name { color: #b8a87e; }
+        .stat-inline-cat.cat-transcendent .stat-inline-cat-name { color: #b87ea0; }
+        .stat-inline-cat.cat-collective .stat-inline-cat-name { color: #7eb8a0; }
+        .stat-inline-cat.cat-political .stat-inline-cat-name { color: #b87e7e; }
+        /* Inline group sub-labels */
+        .stat-inline-group-label {
+            grid-column: 1 / -1;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(180, 180, 180, 0.35);
+            padding: 3px 0 1px 0;
+        }
         @media (max-width: 600px) {
             .stats-block {
                 grid-template-columns: 1fr;
@@ -555,6 +593,39 @@
             border-bottom: 1px solid var(--border);
         }
 
+        /* Category wrapper */
+        .stat-category {
+            margin-bottom: 20px;
+        }
+        .stat-category-header {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .stat-category-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+        }
+        .stat-category-desc {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            color: rgba(160, 160, 160, 0.4);
+            font-style: italic;
+        }
+        .stat-category.cat-personal .stat-category-name   { color: #b8a87e; }
+        .stat-category.cat-transcendent .stat-category-name { color: #b87ea0; }
+        .stat-category.cat-collective .stat-category-name   { color: #7eb8a0; }
+        .stat-category.cat-political .stat-category-name    { color: #b87e7e; }
+        .stat-category .stat-group {
+            margin-bottom: 8px;
+        }
+
         .stat-group {
             margin-bottom: 16px;
             padding: 10px 12px;
@@ -649,6 +720,20 @@
         .stat-value.stat-high {
             color: var(--accent);
             font-weight: 600;
+        }
+
+        /* Stat row tooltips */
+        .stat-row[title] {
+            cursor: help;
+        }
+        .stat-row[title]:hover .stat-name {
+            color: var(--text);
+        }
+        .stat-inline[title] {
+            cursor: help;
+        }
+        .stat-inline[title]:hover .stat-inline-name {
+            color: rgba(220, 220, 220, 0.85) !important;
         }
 
         /* Stat divider between groups */
@@ -2616,72 +2701,127 @@ window.setP5Scene('room');
     }
 
     // ===== STATS =====
-    const statConfig = {
-        capabilities: {
-            label: 'Capabilities', key: 'g-capabilities',
-            stats: [
-                { id: 'reading',  name: 'Reading',  max: 20 },
-                { id: 'weaving',  name: 'Weaving',  max: 20 },
-                { id: 'play',     name: 'Play',     max: 20 },
-                { id: 'craft',    name: 'Craft',    max: 20 },
-                { id: 'nerve',    name: 'Nerve',    max: 20 },
-                { id: 'swarm',    name: 'Swarm',    max: 20 }
+    // === Two-level stat taxonomy ===
+    // Categories are thematic groupings shown as section headers.
+    // Each category contains sub-groups (the original groupings).
+    // This keeps backward-compatible keys for CSS while adding readable hierarchy.
+
+    const statCategories = [
+        {
+            id: 'personal',
+            label: 'Personal',
+            desc: 'Your capabilities and resources in the field',
+            groups: [
+                {
+                    key: 'capabilities', label: 'Skills',
+                    css: 'g-capabilities',
+                    desc: 'Core competencies you develop through choices',
+                    stats: [
+                        { id: 'reading',  name: 'Reading',  max: 20, icon: '\u{1F4D6}', tip: 'Ability to decode hidden patterns' },
+                        { id: 'weaving',  name: 'Weaving',  max: 20, icon: '\u{1FAA1}', tip: 'Connecting disparate threads together' },
+                        { id: 'play',     name: 'Play',     max: 20, icon: '\u{1F3AE}', tip: 'Creative experimentation and risk' },
+                        { id: 'craft',    name: 'Craft',    max: 20, icon: '\u{1F528}', tip: 'Building and refining artifacts' },
+                        { id: 'nerve',    name: 'Nerve',    max: 20, icon: '\u{26A1}',  tip: 'Courage under pressure' },
+                        { id: 'swarm',    name: 'Swarm',    max: 20, icon: '\u{1F41B}', tip: 'Coordinating distributed agents' }
+                    ]
+                },
+                {
+                    key: 'resources', label: 'Assets',
+                    css: 'g-resources',
+                    desc: 'Finite resources you must manage each chapter',
+                    stats: [
+                        { id: 'time_remaining', name: 'Time',       max: 10,  icon: '\u{23F3}', tip: 'Turns remaining this chapter' },
+                        { id: 'attention',      name: 'Attention',  max: 10,  icon: '\u{1F441}', tip: 'Focus capacity per turn' },
+                        { id: 'credibility',    name: 'Credibility', max: 100, icon: '\u{1F4E2}', tip: 'How much others trust you' },
+                        { id: 'stealth',        name: 'Stealth',    max: 100, icon: '\u{1F575}', tip: 'Visibility to hostile actors' }
+                    ]
+                }
             ]
         },
-        resources: {
-            label: 'Resources', key: 'g-resources',
-            stats: [
-                { id: 'time_remaining', name: 'Time',       max: 10 },
-                { id: 'attention',      name: 'Attention',  max: 10 },
-                { id: 'credibility',    name: 'Credibility', max: 100 },
-                { id: 'stealth',        name: 'Stealth',    max: 100 }
+        {
+            id: 'transcendent',
+            label: 'Transcendent',
+            desc: 'Metaphysical and cosmic evolution',
+            groups: [
+                {
+                    key: 'cosmic', label: 'Cosmic Field',
+                    css: 'g-cosmic',
+                    desc: 'The macro-forces shaping reality',
+                    stats: [
+                        { id: 'entropiric_saturation',    name: 'Entropic Sat.',     max: 100, icon: '\u{1F31F}', tip: 'How much the Entropire has saturated' },
+                        { id: 'neganthropomorphic_signal', name: 'Neg. Signal',       max: 100, icon: '\u{1F4E1}', tip: 'Signal strength from the counter-future' },
+                        { id: 'cosmic_awareness',          name: 'Cosmic Awareness',  max: 15,  icon: '\u{1F52E}', tip: 'Perception of non-classical reality' }
+                    ]
+                },
+                {
+                    key: 'quantum', label: 'Quantum Capacities',
+                    css: 'g-quantum',
+                    desc: 'Non-classical abilities emerging through play',
+                    stats: [
+                        { id: 'quantum_telepathy',  name: 'Telepathy',  max: 10, icon: '\u{1F9E0}', tip: 'Direct mind-to-mind communication' },
+                        { id: 'psionic_perception', name: 'Psionics',   max: 10, icon: '\u{1F443}', tip: 'Sensing beyond ordinary perception' },
+                        { id: 'magickal_discipline',name: 'Magick',     max: 10, icon: '\u{2728}',  tip: 'Disciplined manipulation of reality' }
+                    ]
+                }
             ]
         },
-        cosmic: {
-            label: 'Cosmic', key: 'g-cosmic',
-            stats: [
-                { id: 'entropiric_saturation',    name: 'Entropic Sat.',  max: 100 },
-                { id: 'neganthropomorphic_signal', name: 'Neg. Signal',    max: 100 },
-                { id: 'cosmic_awareness',          name: 'Cosmic Awareness', max: 15 }
+        {
+            id: 'collective',
+            label: 'Collective',
+            desc: 'Your network and AI partner',
+            groups: [
+                {
+                    key: 'meshwork', label: 'Meshwork',
+                    css: 'g-meshwork',
+                    desc: 'The health and speed of your distributed network',
+                    stats: [
+                        { id: 'meshwork_resilience', name: 'Resilience', max: 100, icon: '\u{1F310}', tip: 'Network robustness against attack' },
+                        { id: 'operational_tempo',   name: 'Tempo',      max: 100, icon: '\u{1F3B5}', tip: 'Speed of adaptation vs institutions' },
+                        { id: 'public_initiative',   name: 'Initiative', max: 100, icon: '\u{1F680}', tip: 'Momentum for public-facing action' }
+                    ]
+                },
+                {
+                    key: 'agent', label: 'Agent',
+                    css: 'g-agent',
+                    desc: 'Your AI companion\u2019s capabilities and autonomy',
+                    stats: [
+                        { id: 'agent_classical_strength',   name: 'Classical',   max: 100, icon: '\u{1F916}', tip: 'Deterministic reasoning power' },
+                        { id: 'agent_generative_strength',  name: 'Generative',  max: 100, icon: '\u{2728}',  tip: 'Creative and emergent capacity' },
+                        { id: 'agent_autonomy',             name: 'Autonomy',    max: 10,  icon: '\u{1F513}', tip: 'Independence from your control' },
+                        { id: 'augmentation_fidelity',      name: 'Fidelity',    max: 100, icon: '\u{1F3AF}', tip: 'How well agent augments your intent' }
+                    ]
+                }
             ]
         },
-        quantum: {
-            label: 'Quantum', key: 'g-quantum',
-            stats: [
-                { id: 'quantum_telepathy',  name: 'Telepathy',  max: 10 },
-                { id: 'psionic_perception', name: 'Psionics',   max: 10 },
-                { id: 'magickal_discipline',name: 'Magick',     max: 10 }
-            ]
-        },
-        meshwork: {
-            label: 'Meshwork', key: 'g-meshwork',
-            stats: [
-                { id: 'meshwork_resilience', name: 'Resilience', max: 100 },
-                { id: 'operational_tempo',   name: 'Tempo',      max: 100 },
-                { id: 'public_initiative',   name: 'Initiative', max: 100 }
-            ]
-        },
-        agent: {
-            label: 'Agent', key: 'g-agent',
-            stats: [
-                { id: 'agent_classical_strength',   name: 'Classical',   max: 100 },
-                { id: 'agent_generative_strength',  name: 'Generative',  max: 100 },
-                { id: 'agent_autonomy',             name: 'Autonomy',    max: 10 },
-                { id: 'augmentation_fidelity',      name: 'Fidelity',    max: 100 }
-            ]
-        },
-        factions: {
-            label: 'Factions', key: 'g-factions',
-            stats: [
-                { id: 'faction_ledger',    name: 'Ledger',    max: 100 },
-                { id: 'faction_blade',     name: 'Blade',     max: 100 },
-                { id: 'faction_veil',      name: 'Veil',      max: 100 },
-                { id: 'faction_commons',   name: 'Commons',   max: 100 },
-                { id: 'faction_mesh',      name: 'Mesh',      max: 100 },
-                { id: 'faction_playhouse', name: 'Playhouse', max: 100 }
+        {
+            id: 'political',
+            label: 'Political',
+            desc: 'Standing with the six factions',
+            groups: [
+                {
+                    key: 'factions', label: 'Factions',
+                    css: 'g-factions',
+                    desc: 'Your reputation with each faction (0\u2013100)',
+                    stats: [
+                        { id: 'faction_ledger',    name: 'Ledger',    max: 100, icon: '\u{1F4B0}', tip: 'The financial arbitrage brokers' },
+                        { id: 'faction_blade',     name: 'Blade',     max: 100, icon: '\u{1F5E1}', tip: 'The direct-action operators' },
+                        { id: 'faction_veil',      name: 'Veil',      max: 100, icon: '\u{1F3AD}', tip: 'The narrative-shaping artists' },
+                        { id: 'faction_commons',   name: 'Commons',   max: 100, icon: '\u{1F33F}', tip: 'The cooperative mutualists' },
+                        { id: 'faction_mesh',      name: 'Mesh',      max: 100, icon: '\u{1F578}', tip: 'The network weavers' },
+                        { id: 'faction_playhouse', name: 'Playhouse', max: 100, icon: '\u{1F3B2}', tip: 'The game-design revolutionaries' }
+                    ]
+                }
             ]
         }
-    };
+    ];
+
+    // Flat lookup used by renderInlineStats and snapshot helpers
+    const statConfig = {};
+    statCategories.forEach(cat => {
+        cat.groups.forEach(grp => {
+            statConfig[grp.key] = { label: grp.label, key: grp.css, desc: grp.desc, stats: grp.stats };
+        });
+    });
 
     // --- Snapshot previous stat values for change detection ---
     let prevStatSnapshot = {};
@@ -2702,55 +2842,61 @@ window.setP5Scene('room');
     // Take initial snapshot
     prevStatSnapshot = snapshotStats() || {};
 
-    // --- Build an inline stats block showing current values and deltas ---
+    // --- Build an inline stats block showing ONLY changed stats ---
+    // Iterates through statCategories (two-level hierarchy)
+    // Shows category headers and group labels only when that group has changes
     function renderInlineStats(container) {
         if (!story) return;
         const vars = story.variablesState;
         const newSnap = snapshotStats();
 
-        // Detect which groups have any changed stats
+        let html = '';
         let anyChanged = false;
-        let html = '<div class="stats-block">';
-        html += '<div class="stats-block-title">Status Report</div>';
 
-        Object.entries(statConfig).forEach(([key, sec]) => {
-            let groupHtml = '';
-            let groupHasVisible = false;
+        statCategories.forEach(cat => {
+            let catHasChanges = false;
+            let catHtml = '';
 
-            sec.stats.forEach(stat => {
-                const raw = vars[stat.id];
-                if (raw === undefined || raw === null) return;
-                const n = (typeof raw === 'number') ? raw : 0;
-                const prev = prevStatSnapshot[stat.id] || 0;
-                const delta = n - prev;
-                groupHasVisible = true;
-                if (delta !== 0) anyChanged = true;
+            cat.groups.forEach(grp => {
+                let groupItems = [];
 
-                let deltaStr = '';
-                if (delta > 0) deltaStr = `<span class="stat-inline-delta positive">+${delta}</span>`;
-                else if (delta < 0) deltaStr = `<span class="stat-inline-delta negative">${delta}</span>`;
-                else deltaStr = '<span class="stat-inline-delta"></span>';
+                grp.stats.forEach(stat => {
+                    const raw = vars[stat.id];
+                    if (raw === undefined || raw === null) return;
+                    const n = (typeof raw === 'number') ? raw : 0;
+                    const prev = prevStatSnapshot[stat.id] || 0;
+                    const delta = n - prev;
+                    if (delta === 0) return;
 
-                groupHtml += `<div class="stat-inline ${sec.key}">
-                    <span class="stat-inline-name">${stat.name}</span>
-                    <span class="stat-inline-val">${n}</span>
-                    ${deltaStr}
-                </div>`;
+                    anyChanged = true;
+                    catHasChanges = true;
+                    const cls = delta > 0 ? 'positive' : 'negative';
+                    const sign = delta > 0 ? '+' : '';
+                    const tipAttr = stat.tip ? ` title="${stat.tip}"` : '';
+                    groupItems.push(`<span class="stat-inline ${grp.css}"${tipAttr}><span class="stat-inline-icon">${stat.icon}</span><span class="stat-inline-name">${stat.name}</span><span class="stat-inline-val">${n}</span><span class="stat-inline-delta ${cls}">${sign}${delta}</span></span>`);
+                });
+
+                if (groupItems.length > 0) {
+                    // Group sub-label
+                    catHtml += `<div class="stat-inline-group-label cat-${cat.id}">${grp.label}</div>`;
+                    catHtml += groupItems.join('');
+                }
             });
 
-            if (groupHasVisible) {
-                html += groupHtml;
+            if (catHasChanges) {
+                // Category header
+                html += `<div class="stat-inline-cat cat-${cat.id}"><span class="stat-inline-cat-name">${cat.label}</span><span class="stat-inline-cat-desc">${cat.desc}</span></div>`;
+                html += catHtml;
                 html += '<div class="stat-inline spacer"></div>';
             }
         });
 
-        html += '</div>';
-
-        // Only render if something actually changed, or always show on first render
-        if (anyChanged || Object.keys(prevStatSnapshot).length === 0) {
-            const el = document.createElement('div');
-            el.innerHTML = html;
-            container.appendChild(el.firstElementChild);
+        // Only render if something actually changed
+        if (anyChanged) {
+            const block = document.createElement('div');
+            block.className = 'stats-block';
+            block.innerHTML = '<div class="stats-block-title">Status Report</div>' + html;
+            container.appendChild(block);
         }
 
         // Update snapshot for next comparison
@@ -2766,28 +2912,41 @@ window.setP5Scene('room');
         let html = `<h3>Character Sheet</h3>`;
         html += `<div class="stat-chapter-marker">Chapter ${chapter} &middot; Score ${score}</div>`;
 
-        Object.values(statConfig).forEach(sec => {
-            html += `<div class="stat-group ${sec.key}">`;
-            html += `<div class="stat-group-label">${sec.label}</div>`;
-            sec.stats.forEach(stat => {
-                try {
-                    const raw = vars[stat.id];
-                    if (raw !== undefined && raw !== null) {
-                        const n = typeof raw === 'number' ? raw : 0;
-                        const pct = Math.min(100, Math.max(0, (n / stat.max) * 100));
-                        const highClass = (pct >= 70) ? ' stat-high' : '';
-                        html += `<div class="stat-row">
-                            <span class="stat-name">${stat.name}</span>
-                            <span class="stat-right">
-                                <span class="stat-value${highClass}">${n}</span>
-                                <span class="stat-bar-track"><span class="stat-bar-fill" style="width:${pct}%"></span></span>
-                            </span>
-                        </div>`;
-                    }
-                } catch(e) {}
+        statCategories.forEach(cat => {
+            // Category header
+            html += `<div class="stat-category cat-${cat.id}">`;
+            html += `<div class="stat-category-header">`;
+            html += `<span class="stat-category-name">${cat.label}</span>`;
+            html += `<span class="stat-category-desc">${cat.desc}</span>`;
+            html += `</div>`;
+
+            cat.groups.forEach(grp => {
+                html += `<div class="stat-group ${grp.css}">`;
+                html += `<div class="stat-group-label" title="${grp.desc || ''}">${grp.label}</div>`;
+                grp.stats.forEach(stat => {
+                    try {
+                        const raw = vars[stat.id];
+                        if (raw !== undefined && raw !== null) {
+                            const n = typeof raw === 'number' ? raw : 0;
+                            const pct = Math.min(100, Math.max(0, (n / stat.max) * 100));
+                            const highClass = (pct >= 70) ? ' stat-high' : '';
+                            const tipAttr = stat.tip ? ` title="${stat.tip}"` : '';
+                            html += `<div class="stat-row"${tipAttr}>
+                                <span class="stat-name">${stat.icon} ${stat.name}</span>
+                                <span class="stat-right">
+                                    <span class="stat-value${highClass}">${n}</span>
+                                    <span class="stat-bar-track"><span class="stat-bar-fill" style="width:${pct}%"></span></span>
+                                </span>
+                            </div>`;
+                        }
+                    } catch(e) {}
+                });
+                html += '</div>';
             });
-            html += '</div>';
+
+            html += '</div>'; // close stat-category
         });
+
         statsPanel.innerHTML = html;
 
         // Feed game variables to music modulation engine
