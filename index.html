@@ -558,6 +558,41 @@
 
         .choice-card:hover .choice-index { opacity: 1; }
 
+        .choice-emoji {
+            font-size: 16px;
+            margin-right: 8px;
+            filter: drop-shadow(0 0 4px var(--accent));
+        }
+
+        .choice-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 20px;
+            right: 20px;
+            background: rgba(10,10,8,0.95);
+            border: 1px solid var(--accent);
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--text-dim);
+            font-family: 'IBM Plex Mono', monospace;
+            line-height: 1.4;
+            z-index: 100;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .choice-tooltip::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 20px;
+            border: 6px solid transparent;
+            border-top-color: var(--accent);
+        }
+
+        .choice-card:hover .choice-tooltip { display: block; }
+
         /* ===== STATS PANEL ===== */
         #stats-panel {
             position: fixed;
@@ -2557,7 +2592,25 @@ window.setP5Scene('room');
         const section = document.createElement('div');
         section.className = 'story-section';
 
+        // Detect stat-dump lines from ink: -- StatName:Value ... -- or "Choose your focus:"
+        const statLinePattern = /^--\s*\w[\w\s-]*:\d+.*--$/;
+        const focusPromptPattern = /^Choose your focus/i;
+        let isFocusTurn = false;
+        let hasStatDump = false;
+
         paragraphs.forEach(p => {
+            // Stat-dump lines (-- Read:6 Weave:2 ... --)
+            if (statLinePattern.test(p)) {
+                hasStatDump = true;
+                return; // suppress
+            }
+
+            // "Choose your focus:" prompt
+            if (focusPromptPattern.test(p)) {
+                isFocusTurn = true;
+                return; // suppress
+            }
+
             // Section headers (-- TITLE --)
             const headerMatch = p.match(/^--\s*(.+?)\s*--$/);
             if (headerMatch) {
@@ -2588,10 +2641,16 @@ window.setP5Scene('room');
 
         storyContent.appendChild(section);
 
-        // Render inline stats only after a choice was made
-        if (afterChoice) {
+        // Check if upcoming choices look like focus choices
+        if (!isFocusTurn && story.currentChoices.length > 0) {
+            isFocusTurn = story.currentChoices.some(c =>
+                /\[.*\]\s*-\s*(Use your|Map who|Recruit|Launch|Push|Cultivate|Build|Decode|Deepen)/.test(c.text)
+            );
+        }
+
+        // Render styled stats block replacing the ink stat dump
+        if (hasStatDump && isFocusTurn) {
             renderInlineStats(section);
-            afterChoice = false;
         }
 
         // Always update the snapshot so changes accumulate correctly
@@ -2616,6 +2675,38 @@ window.setP5Scene('room');
     }
 
     // ===== CHOICES =====
+    // ===== FOCUS CHOICE TOOLTIPS =====
+    const focusChoiceMap = {
+        'reading': { emoji: '📖', tooltip: 'Read the signals, patterns, and institutional logic around you.' },
+        'weaving': { emoji: '🕸️', tooltip: 'Connect with others, build trust, and maintain your network.' },
+        'play': { emoji: '🎮', tooltip: 'Design games, stories, and experiments that hide protocols in plain sight.' },
+        'craft': { emoji: '🔧', tooltip: 'Build and repair tools, infrastructure, and practical solutions.' },
+        'nerve': { emoji: '⚡', tooltip: 'Act under threat, infiltrate, bluff, or escape dangerous situations.' },
+        'swarm': { emoji: '🐝', tooltip: 'Coordinate human and agent collectives across distance and difference.' },
+        'recruit': { emoji: '🌱', tooltip: 'Bring new allies into your meshwork, each with their own capacities.' },
+        'signal': { emoji: '📡', tooltip: 'Receive and transmit non-classical signals from the cosmos.' },
+        'quantum': { emoji: '✦', tooltip: 'Navigate quantum channels that operate outside normal causality.' },
+    };
+
+    function getChoiceTooltip(text) {
+        const lower = text.toLowerCase();
+        for (const [key, val] of Object.entries(focusChoiceMap)) {
+            if (lower.includes(key)) return val;
+        }
+        // Fallback defaults for known focus patterns
+        if (/use your.*reading/i.test(text)) return { emoji: '📖', tooltip: 'Read the signals, patterns, and institutional logic around you.' };
+        if (/map who/i.test(text)) return { emoji: '🕸️', tooltip: 'Map power structures and find where theater is thinnest.' };
+        if (/recruit/i.test(text)) return { emoji: '🌱', tooltip: 'Bring new allies into your meshwork, each with their own capacities.' };
+        if (/launch|push.*play|use play/i.test(text)) return { emoji: '🎮', tooltip: 'Launch games, cultural experiments, or protocols disguised as toys.' };
+        if (/build.*mesh/i.test(text)) return { emoji: '🕸️', tooltip: 'Recruit allies and strengthen offline connections.' };
+        if (/push.*agent|deepen.*agent/i.test(text)) return { emoji: '✦', tooltip: 'Push the agent toward its anomalous configurations.' };
+        if (/cultivate/i.test(text)) return { emoji: '🌿', tooltip: 'Tend what is growing, prepare for inevitable change.' };
+        if (/build/i.test(text)) return { emoji: '🔧', tooltip: 'Build infrastructure and tools for the counter-assemblage.' };
+        if (/decode/i.test(text)) return { emoji: '🔮', tooltip: 'Decode and interpret hidden logics in the system.' };
+        if (/deepen/i.test(text)) return { emoji: '✦', tooltip: 'Deepen your capacity to navigate what lies beyond ordinary channels.' };
+        return null;
+    }
+
     function showChoices() {
         choicesInner.innerHTML = '';
         choicesArea.classList.add('open');
@@ -2624,7 +2715,10 @@ window.setP5Scene('room');
         story.currentChoices.forEach((choice, i) => {
             const card = document.createElement('div');
             card.className = 'choice-card';
-            card.innerHTML = `<span class="choice-text">${choice.text}</span><span class="choice-index">&rarr;</span>`;
+            const tooltip = getChoiceTooltip(choice.text);
+            const emojiHtml = tooltip ? `<span class="choice-emoji">${tooltip.emoji}</span>` : '';
+            const tooltipHtml = tooltip ? `<div class="choice-tooltip">${tooltip.tooltip}</div>` : '';
+            card.innerHTML = `<span class="choice-text">${emojiHtml}${choice.text}</span><span class="choice-index">&rarr;</span>${tooltipHtml}`;
             card.addEventListener('click', () => {
                 choicesArea.classList.remove('open');
                 // Play choice SFX
@@ -2643,7 +2737,6 @@ window.setP5Scene('room');
                 storyContent.appendChild(choiceSection);
 
                 setTimeout(() => {
-                    afterChoice = true;
                     renderStory();
                 }, 150);
             });
@@ -2832,7 +2925,6 @@ window.setP5Scene('room');
 
     // --- Snapshot previous stat values for change detection ---
     let prevStatSnapshot = {};
-    let afterChoice = false;
     function snapshotStats() {
         if (!story) return;
         const vars = story.variablesState;
@@ -2850,19 +2942,18 @@ window.setP5Scene('room');
     // Take initial snapshot
     prevStatSnapshot = snapshotStats() || {};
 
-    // --- Build an inline stats block showing ONLY changed stats ---
-    // Iterates through statCategories (two-level hierarchy)
-    // Shows category headers and group labels only when that group has changes
+    // --- Build an inline stats block replacing the ink stat dump ---
+    // Shows ALL stats grouped by category with delta indicators for changes
+    // Only called on focus-choice turns (when ink outputs the stat dump)
     function renderInlineStats(container) {
         if (!story) return;
         const vars = story.variablesState;
         const newSnap = snapshotStats();
 
         let html = '';
-        let anyChanged = false;
+        let hasAnyStats = false;
 
         statCategories.forEach(cat => {
-            let catHasChanges = false;
             let catHtml = '';
 
             cat.groups.forEach(grp => {
@@ -2874,33 +2965,36 @@ window.setP5Scene('room');
                     const n = (typeof raw === 'number') ? raw : 0;
                     const prev = prevStatSnapshot[stat.id] || 0;
                     const delta = n - prev;
-                    if (delta === 0) return;
 
-                    anyChanged = true;
-                    catHasChanges = true;
-                    const cls = delta > 0 ? 'positive' : 'negative';
-                    const sign = delta > 0 ? '+' : '';
+                    hasAnyStats = true;
                     const tipAttr = stat.tip ? ` title="${stat.tip}"` : '';
-                    groupItems.push(`<span class="stat-inline ${grp.css}"${tipAttr}><span class="stat-inline-icon">${stat.icon}</span><span class="stat-inline-name">${stat.name}</span><span class="stat-inline-val">${n}</span><span class="stat-inline-delta ${cls}">${sign}${delta}</span></span>`);
+
+                    // Show delta badge only if changed
+                    let deltaHtml = '';
+                    if (delta !== 0) {
+                        const cls = delta > 0 ? 'positive' : 'negative';
+                        const sign = delta > 0 ? '+' : '';
+                        deltaHtml = `<span class="stat-inline-delta ${cls}">${sign}${delta}</span>`;
+                    }
+
+                    groupItems.push(`<span class="stat-inline ${grp.css}"${tipAttr}><span class="stat-inline-icon">${stat.icon}</span><span class="stat-inline-name">${stat.name}</span><span class="stat-inline-val">${n}</span>${deltaHtml}</span>`);
                 });
 
                 if (groupItems.length > 0) {
-                    // Group sub-label
                     catHtml += `<div class="stat-inline-group-label cat-${cat.id}">${grp.label}</div>`;
                     catHtml += groupItems.join('');
                 }
             });
 
-            if (catHasChanges) {
-                // Category header
+            if (catHtml) {
                 html += `<div class="stat-inline-cat cat-${cat.id}"><span class="stat-inline-cat-name">${cat.label}</span><span class="stat-inline-cat-desc">${cat.desc}</span></div>`;
                 html += catHtml;
                 html += '<div class="stat-inline spacer"></div>';
             }
         });
 
-        // Only render if something actually changed
-        if (anyChanged) {
+        // Only render if we have stats to show
+        if (hasAnyStats) {
             const block = document.createElement('div');
             block.className = 'stats-block';
             block.innerHTML = '<div class="stats-block-title">Status Report</div>' + html;
