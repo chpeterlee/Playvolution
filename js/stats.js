@@ -127,8 +127,6 @@ statCategories.forEach(cat => {
 
 // --- Snapshot previous stat values for change detection ---
 let prevStatSnapshot = {};
-let pendingFocusStats = false;
-let deferredStatSnapshot = null;
 function snapshotStats() {
     if (!getStory()) return;
     const vars = getStory().variablesState;
@@ -148,13 +146,10 @@ prevStatSnapshot = snapshotStats() || {};
 
 // --- Build an inline stats block replacing the ink stat dump ---
 // Shows ALL stats grouped by category with delta indicators for changes
-// Called AFTER a focus choice is made, using deferred snapshot for accurate deltas
+// Called whenever ink outputs stat dump lines, replacing raw text with styled block
 function renderInlineStats(container) {
     if (!getStory()) return;
     const vars = getStory().variablesState;
-
-    // Use deferred snapshot (saved when stat dump was detected) for delta comparison
-    const compareSnap = deferredStatSnapshot || prevStatSnapshot;
 
     let html = '';
     let hasAnyStats = false;
@@ -169,7 +164,7 @@ function renderInlineStats(container) {
                 const raw = vars[stat.id];
                 if (raw === undefined || raw === null) return;
                 const n = (typeof raw === 'number') ? raw : 0;
-                const prev = compareSnap[stat.id] || 0;
+                const prev = prevStatSnapshot[stat.id] || 0;
                 const delta = n - prev;
 
                 hasAnyStats = true;
@@ -206,9 +201,6 @@ function renderInlineStats(container) {
         block.innerHTML = '<div class="stats-block-title">Status Report</div>' + html;
         container.appendChild(block);
     }
-
-    // Update snapshot for next comparison
-    prevStatSnapshot = newSnap;
 }
 
 function updateStats() {

@@ -152,10 +152,11 @@ function renderStory() {
     const section = document.createElement('div');
     section.className = 'story-section';
 
-    // Detect stat-dump lines from ink: -- StatName:Value ... -- or "Choose your focus:"
+    // Detect stat-dump lines from ink and suppress them in favor of styled block
+    // Matches: -- Read:6 Weave:2 Play:4 ... --  or  -- Quantum - Tele:2 Psion:1 ... --
     const statLinePattern = /^--\s*\w[\w\s-]*:\d+.*--$/;
+    const endOutputPattern = /^--\s*End output\s*--$/i;
     const focusPromptPattern = /^Choose your focus/i;
-    let isFocusTurn = false;
     let hasStatDump = false;
 
     paragraphs.forEach(p => {
@@ -165,9 +166,14 @@ function renderStory() {
             return; // suppress
         }
 
+        // "End output --" when alongside stat dumps
+        if (endOutputPattern.test(p)) {
+            hasStatDump = true;
+            return; // suppress
+        }
+
         // "Choose your focus:" prompt
         if (focusPromptPattern.test(p)) {
-            isFocusTurn = true;
             return; // suppress
         }
 
@@ -201,25 +207,9 @@ function renderStory() {
 
     storyContent.appendChild(section);
 
-    // Check if upcoming choices look like focus choices
-    if (!isFocusTurn && story.currentChoices.length > 0) {
-        isFocusTurn = story.currentChoices.some(c =>
-            /\[.*\]\s*-\s*(Use your|Map who|Recruit|Launch|Push|Cultivate|Build|Decode|Deepen)/.test(c.text)
-        );
-    }
-
-    // Stat dump detected on a focus turn: suppress raw lines, save snapshot for next turn
-    if (hasStatDump && isFocusTurn) {
-        // Save current snapshot so we can compute deltas after the focus choice
-        deferredStatSnapshot = Object.assign({}, prevStatSnapshot);
-        pendingFocusStats = true;
-    }
-
-    // After a focus choice was made, render the deferred stats block
-    if (pendingFocusStats && !hasStatDump) {
+    // Replace raw stat dump with styled status report block
+    if (hasStatDump) {
         renderInlineStats(section);
-        pendingFocusStats = false;
-        deferredStatSnapshot = null;
     }
 
     // Always update the snapshot so changes accumulate correctly
@@ -257,6 +247,20 @@ function showChoices() {
         const emojiHtml = tooltip ? `<span class="choice-emoji">${tooltip.emoji}</span>` : '';
         const tooltipHtml = tooltip ? `<div class="choice-tooltip">${tooltip.tooltip}</div>` : '';
         card.innerHTML = `<span class="choice-text">${emojiHtml}${choice.text}</span><span class="choice-index">&rarr;</span>${tooltipHtml}`;
+
+        // Position fixed tooltip on hover so it escapes the scroll container
+        const tooltipEl = card.querySelector('.choice-tooltip');
+        if (tooltipEl) {
+            card.addEventListener('mouseenter', () => {
+                const rect = card.getBoundingClientRect();
+                // Defer to next frame so tooltip is visible for height calc
+                requestAnimationFrame(() => {
+                    tooltipEl.style.top = (rect.top - tooltipEl.offsetHeight - 8) + 'px';
+                    tooltipEl.style.left = Math.max(8, rect.left + rect.width / 2 - 140) + 'px';
+                });
+            });
+        }
+
         card.addEventListener('click', () => {
             choicesArea.classList.remove('open');
             // Play choice SFX
