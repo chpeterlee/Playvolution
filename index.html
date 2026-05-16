@@ -2588,8 +2588,14 @@ window.setP5Scene('room');
 
         storyContent.appendChild(section);
 
-        // Render inline stats report (shows deltas from previous state)
-        renderInlineStats(section);
+        // Render inline stats only after a choice was made
+        if (afterChoice) {
+            renderInlineStats(section);
+            afterChoice = false;
+        }
+
+        // Always update the snapshot so changes accumulate correctly
+        prevStatSnapshot = snapshotStats() || prevStatSnapshot;
 
         // Feed game variables to music modulation after each story beat
         if (window.applyGameModulation) {
@@ -2637,6 +2643,7 @@ window.setP5Scene('room');
                 storyContent.appendChild(choiceSection);
 
                 setTimeout(() => {
+                    afterChoice = true;
                     renderStory();
                 }, 150);
             });
@@ -2825,6 +2832,7 @@ window.setP5Scene('room');
 
     // --- Snapshot previous stat values for change detection ---
     let prevStatSnapshot = {};
+    let afterChoice = false;
     function snapshotStats() {
         if (!story) return;
         const vars = story.variablesState;
