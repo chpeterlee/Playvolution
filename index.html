@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playvolution</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+    <link rel="stylesheet" href="css/main.css">
 
         :root {
             --bg: #0a0a0a;
@@ -472,7 +469,7 @@
 
         #choices-area.open {
             display: block;
-            overflow: visible;
+            overflow-y: auto;
             position: relative;
             z-index: 50;
         }
@@ -2972,11 +2969,13 @@ window.setP5Scene('room');
 
     // --- Build an inline stats block replacing the ink stat dump ---
     // Shows ALL stats grouped by category with delta indicators for changes
-    // Only called on focus-choice turns (when ink outputs the stat dump)
+    // Called AFTER a focus choice is made, using deferred snapshot for accurate deltas
     function renderInlineStats(container) {
         if (!story) return;
         const vars = story.variablesState;
-        const newSnap = snapshotStats();
+
+        // Use deferred snapshot (saved when stat dump was detected) for delta comparison
+        const compareSnap = deferredStatSnapshot || prevStatSnapshot;
 
         let html = '';
         let hasAnyStats = false;
@@ -2991,7 +2990,7 @@ window.setP5Scene('room');
                     const raw = vars[stat.id];
                     if (raw === undefined || raw === null) return;
                     const n = (typeof raw === 'number') ? raw : 0;
-                    const prev = prevStatSnapshot[stat.id] || 0;
+                    const prev = compareSnap[stat.id] || 0;
                     const delta = n - prev;
 
                     hasAnyStats = true;
