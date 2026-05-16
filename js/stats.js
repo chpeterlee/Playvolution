@@ -4,6 +4,10 @@
 // Each category contains sub-groups (the original groupings).
 // This keeps backward-compatible keys for CSS while adding readable hierarchy.
 
+// Accessors for shared state (set by game-engine.js)
+function getStory() { return window._story; }
+function getStatsPanel() { return window._statsPanel; }
+
 const statCategories = [
     {
         id: 'personal',
@@ -126,8 +130,8 @@ let prevStatSnapshot = {};
 let pendingFocusStats = false;
 let deferredStatSnapshot = null;
 function snapshotStats() {
-    if (!story) return;
-    const vars = story.variablesState;
+    if (!getStory()) return;
+    const vars = getStory().variablesState;
     const snap = {};
     Object.values(statConfig).forEach(sec => {
         sec.stats.forEach(stat => {
@@ -146,8 +150,8 @@ prevStatSnapshot = snapshotStats() || {};
 // Shows ALL stats grouped by category with delta indicators for changes
 // Called AFTER a focus choice is made, using deferred snapshot for accurate deltas
 function renderInlineStats(container) {
-    if (!story) return;
-    const vars = story.variablesState;
+    if (!getStory()) return;
+    const vars = getStory().variablesState;
 
     // Use deferred snapshot (saved when stat dump was detected) for delta comparison
     const compareSnap = deferredStatSnapshot || prevStatSnapshot;
@@ -208,8 +212,8 @@ function renderInlineStats(container) {
 }
 
 function updateStats() {
-    if (!story) return;
-    const vars = story.variablesState;
+    if (!getStory()) return;
+    const vars = getStory().variablesState;
     const chapter = vars.chapter || 1;
     const score = vars.playvolution_score || 0;
 
@@ -251,7 +255,8 @@ function updateStats() {
         html += '</div>'; // close stat-category
     });
 
-    statsPanel.innerHTML = html;
+    statsPanel = getStatsPanel();
+    if (statsPanel) statsPanel.innerHTML = html;
 
     // Feed game variables to music modulation engine
     if (window.applyGameModulation) window.applyGameModulation(vars);
