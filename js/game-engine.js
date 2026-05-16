@@ -248,16 +248,19 @@ function showChoices() {
         const tooltipHtml = tooltip ? `<div class="choice-tooltip">${tooltip.tooltip}</div>` : '';
         card.innerHTML = `<span class="choice-text">${emojiHtml}${choice.text}</span><span class="choice-index">&rarr;</span>${tooltipHtml}`;
 
-        // Position fixed tooltip on hover so it escapes the scroll container
+        // Control fixed tooltip entirely via JS to avoid CSS :hover feedback loops
         const tooltipEl = card.querySelector('.choice-tooltip');
         if (tooltipEl) {
             card.addEventListener('mouseenter', () => {
+                tooltipEl.style.display = 'block';
                 const rect = card.getBoundingClientRect();
-                // Defer to next frame so tooltip is visible for height calc
                 requestAnimationFrame(() => {
                     tooltipEl.style.top = (rect.top - tooltipEl.offsetHeight - 8) + 'px';
                     tooltipEl.style.left = Math.max(8, rect.left + rect.width / 2 - 140) + 'px';
                 });
+            });
+            card.addEventListener('mouseleave', () => {
+                tooltipEl.style.display = 'none';
             });
         }
 

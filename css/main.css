@@ -531,7 +531,6 @@ body {
 .choice-card:hover {
     border-color: var(--border-bright);
     background: rgba(30,30,24,0.6);
-    padding-left: 26px;
 }
 
 .choice-card:hover::before { transform: scaleY(1); }
@@ -582,7 +581,7 @@ body {
     white-space: normal;
 }
 
-.choice-card:hover .choice-tooltip { display: block; }
+/* tooltip visibility is controlled by JS, not CSS :hover */
 
 /* ===== STATS PANEL ===== */
 #stats-panel {
