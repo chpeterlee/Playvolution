@@ -248,8 +248,9 @@ function showChoices() {
         const emojiHtml = tooltip ? `<span class="choice-emoji">${tooltip.emoji}</span>` : '';
         card.innerHTML = `<span class="choice-text">${emojiHtml}${choice.text}</span><span class="choice-index">&rarr;</span>`;
 
-        // Append tooltip to body so it can't interfere with card hover/layout
+        // Manage hover state via JS class to prevent CSS :hover feedback loops
         let tooltipEl = null;
+        let ttWidth = 0, ttHeight = 0;
         if (tooltip) {
             tooltipEl = document.createElement('div');
             tooltipEl.className = 'choice-tooltip';
@@ -260,27 +261,31 @@ function showChoices() {
             // Pre-measure dimensions to avoid forced reflow during hover
             tooltipEl.style.visibility = 'hidden';
             tooltipEl.style.display = 'block';
-            const ttWidth = tooltipEl.offsetWidth;
-            const ttHeight = tooltipEl.offsetHeight;
+            ttWidth = tooltipEl.offsetWidth;
+            ttHeight = tooltipEl.offsetHeight;
             tooltipEl.style.display = 'none';
             tooltipEl.style.visibility = '';
+        }
 
-            let hideTimer = null;
-            card.addEventListener('mouseenter', () => {
-                clearTimeout(hideTimer);
+        let hoverTimer = null;
+        card.addEventListener('mouseenter', () => {
+            clearTimeout(hoverTimer);
+            card.classList.add('hovered');
+            if (tooltipEl) {
                 const rect = card.getBoundingClientRect();
                 let left = rect.left + rect.width / 2 - ttWidth / 2;
                 left = Math.max(8, Math.min(left, window.innerWidth - ttWidth - 8));
                 tooltipEl.style.top = (rect.top - ttHeight - 8) + 'px';
                 tooltipEl.style.left = left + 'px';
                 tooltipEl.style.display = 'block';
-            });
-            card.addEventListener('mouseleave', () => {
-                hideTimer = setTimeout(() => {
-                    tooltipEl.style.display = 'none';
-                }, 80);
-            });
-        }
+            }
+        });
+        card.addEventListener('mouseleave', () => {
+            hoverTimer = setTimeout(() => {
+                card.classList.remove('hovered');
+                if (tooltipEl) tooltipEl.style.display = 'none';
+            }, 80);
+        });
 
         card.addEventListener('click', () => {
             choicesArea.classList.remove('open');

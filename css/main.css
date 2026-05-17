@@ -528,13 +528,13 @@ body {
     transition: left 0.5s ease;
 }
 
-.choice-card:hover {
+.choice-card.hovered {
     border-color: var(--border-bright);
     background: rgba(30,30,24,0.6);
 }
 
-.choice-card:hover::before { transform: scaleY(1); }
-.choice-card:hover::after { left: 100%; }
+.choice-card.hovered::before { transform: scaleY(1); }
+.choice-card.hovered::after { left: 100%; }
 
 .choice-card .choice-text {
     font-family: 'Crimson Text', Georgia, serif;
@@ -544,7 +544,7 @@ body {
     transition: color 0.3s ease;
 }
 
-.choice-card:hover .choice-text { color: var(--text); }
+.choice-card.hovered .choice-text { color: var(--text); }
 
 .choice-card .choice-index {
     font-family: 'IBM Plex Mono', monospace;
@@ -555,7 +555,7 @@ body {
     transition: opacity 0.3s ease;
 }
 
-.choice-card:hover .choice-index { opacity: 1; }
+.choice-card.hovered .choice-index { opacity: 1; }
 
 .choice-emoji {
     font-size: 16px;
