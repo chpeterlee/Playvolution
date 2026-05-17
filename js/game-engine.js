@@ -258,13 +258,20 @@ function showChoices() {
             document.body.appendChild(tooltipEl);
 
             card.addEventListener('mouseenter', () => {
-                const rect = card.getBoundingClientRect();
-                tooltipEl.style.top = (rect.top - 8) + 'px';
-                tooltipEl.style.left = Math.max(8, rect.left + rect.width / 2 - 140) + 'px';
+                // Position off-screen first to measure without flash
+                tooltipEl.style.top = '-9999px';
                 tooltipEl.style.display = 'block';
-                requestAnimationFrame(() => {
-                    tooltipEl.style.top = (rect.top - tooltipEl.offsetHeight - 8) + 'px';
-                });
+
+                const rect = card.getBoundingClientRect();
+                const ttWidth = tooltipEl.offsetWidth;
+                const ttHeight = tooltipEl.offsetHeight;
+
+                // Center tooltip on card, clamped to viewport
+                let left = rect.left + rect.width / 2 - ttWidth / 2;
+                left = Math.max(8, Math.min(left, window.innerWidth - ttWidth - 8));
+
+                tooltipEl.style.top = (rect.top - ttHeight - 8) + 'px';
+                tooltipEl.style.left = left + 'px';
             });
             card.addEventListener('mouseleave', () => {
                 tooltipEl.style.display = 'none';
