@@ -257,23 +257,23 @@ function showChoices() {
             tooltipEl.style.display = 'none';
             document.body.appendChild(tooltipEl);
 
+            // Pre-measure dimensions to avoid forced reflow during hover
+            tooltipEl.style.visibility = 'hidden';
+            tooltipEl.style.display = 'block';
+            const ttWidth = tooltipEl.offsetWidth;
+            const ttHeight = tooltipEl.offsetHeight;
+            tooltipEl.style.display = 'none';
+            tooltipEl.style.visibility = '';
+
             let hideTimer = null;
             card.addEventListener('mouseenter', () => {
                 clearTimeout(hideTimer);
-                // Position off-screen first to measure without flash
-                tooltipEl.style.top = '-9999px';
-                tooltipEl.style.display = 'block';
-
                 const rect = card.getBoundingClientRect();
-                const ttWidth = tooltipEl.offsetWidth;
-                const ttHeight = tooltipEl.offsetHeight;
-
-                // Center tooltip on card, clamped to viewport
                 let left = rect.left + rect.width / 2 - ttWidth / 2;
                 left = Math.max(8, Math.min(left, window.innerWidth - ttWidth - 8));
-
                 tooltipEl.style.top = (rect.top - ttHeight - 8) + 'px';
                 tooltipEl.style.left = left + 'px';
+                tooltipEl.style.display = 'block';
             });
             card.addEventListener('mouseleave', () => {
                 hideTimer = setTimeout(() => {
