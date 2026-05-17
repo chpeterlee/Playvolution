@@ -166,9 +166,8 @@ function renderStory() {
             return; // suppress
         }
 
-        // "End output --" when alongside stat dumps
+        // "End output --" — suppress always (it's just a marker), but don't trigger stats block
         if (endOutputPattern.test(p)) {
-            hasStatDump = true;
             return; // suppress
         }
 
@@ -236,6 +235,8 @@ function renderStory() {
 // ===== CHOICES =====
 
 function showChoices() {
+    // Clean up any body-appended tooltips from previous choices
+    document.querySelectorAll('.choice-tooltip').forEach(el => el.remove());
     choicesInner.innerHTML = '';
     choicesArea.classList.add('open');
     updateScrollHint();
@@ -245,18 +246,24 @@ function showChoices() {
         card.className = 'choice-card';
         const tooltip = getChoiceTooltip(choice.text);
         const emojiHtml = tooltip ? `<span class="choice-emoji">${tooltip.emoji}</span>` : '';
-        const tooltipHtml = tooltip ? `<div class="choice-tooltip">${tooltip.tooltip}</div>` : '';
-        card.innerHTML = `<span class="choice-text">${emojiHtml}${choice.text}</span><span class="choice-index">&rarr;</span>${tooltipHtml}`;
+        card.innerHTML = `<span class="choice-text">${emojiHtml}${choice.text}</span><span class="choice-index">&rarr;</span>`;
 
-        // Control fixed tooltip entirely via JS to avoid CSS :hover feedback loops
-        const tooltipEl = card.querySelector('.choice-tooltip');
-        if (tooltipEl) {
+        // Append tooltip to body so it can't interfere with card hover/layout
+        let tooltipEl = null;
+        if (tooltip) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.className = 'choice-tooltip';
+            tooltipEl.textContent = tooltip.tooltip;
+            tooltipEl.style.display = 'none';
+            document.body.appendChild(tooltipEl);
+
             card.addEventListener('mouseenter', () => {
-                tooltipEl.style.display = 'block';
                 const rect = card.getBoundingClientRect();
+                tooltipEl.style.top = (rect.top - 8) + 'px';
+                tooltipEl.style.left = Math.max(8, rect.left + rect.width / 2 - 140) + 'px';
+                tooltipEl.style.display = 'block';
                 requestAnimationFrame(() => {
                     tooltipEl.style.top = (rect.top - tooltipEl.offsetHeight - 8) + 'px';
-                    tooltipEl.style.left = Math.max(8, rect.left + rect.width / 2 - 140) + 'px';
                 });
             });
             card.addEventListener('mouseleave', () => {
