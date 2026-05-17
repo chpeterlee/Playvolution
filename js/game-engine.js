@@ -257,7 +257,9 @@ function showChoices() {
             tooltipEl.style.display = 'none';
             document.body.appendChild(tooltipEl);
 
+            let hideTimer = null;
             card.addEventListener('mouseenter', () => {
+                clearTimeout(hideTimer);
                 // Position off-screen first to measure without flash
                 tooltipEl.style.top = '-9999px';
                 tooltipEl.style.display = 'block';
@@ -274,7 +276,9 @@ function showChoices() {
                 tooltipEl.style.left = left + 'px';
             });
             card.addEventListener('mouseleave', () => {
-                tooltipEl.style.display = 'none';
+                hideTimer = setTimeout(() => {
+                    tooltipEl.style.display = 'none';
+                }, 80);
             });
         }
 
