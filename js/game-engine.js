@@ -3,6 +3,7 @@ let story = null;
 let historyLog = [];
 let currentScene = 'room';
 let endingReached = false;
+let focusChoiceSeen = false;
 
 // ===== DOM =====
 const $ = id => document.getElementById(id);
@@ -173,6 +174,7 @@ function renderStory() {
 
         // "Choose your focus:" prompt
         if (focusPromptPattern.test(p)) {
+            focusChoiceSeen = true;
             return; // suppress
         }
 
@@ -245,13 +247,13 @@ function showChoices() {
         const card = document.createElement('div');
         card.className = 'choice-card';
         const tooltip = getChoiceTooltip(choice.text);
-        const emojiHtml = tooltip ? `<span class="choice-emoji">${tooltip.emoji}</span>` : '';
+        const emojiHtml = (tooltip && focusChoiceSeen) ? `<span class="choice-emoji">${tooltip.emoji}</span>` : '';
         card.innerHTML = `<span class="choice-text">${emojiHtml}${choice.text}</span><span class="choice-index">&rarr;</span>`;
 
         // Manage hover state via JS class to prevent CSS :hover feedback loops
         let tooltipEl = null;
         let ttWidth = 0, ttHeight = 0;
-        if (tooltip) {
+        if (tooltip && focusChoiceSeen) {
             tooltipEl = document.createElement('div');
             tooltipEl.className = 'choice-tooltip';
             tooltipEl.textContent = tooltip.tooltip;

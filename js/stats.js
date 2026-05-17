@@ -145,14 +145,14 @@ function snapshotStats() {
 prevStatSnapshot = snapshotStats() || {};
 
 // --- Build an inline stats block replacing the ink stat dump ---
-// Shows ALL stats grouped by category with delta indicators for changes
+// Shows ONLY stats that changed, grouped by category with delta indicators
 // Called whenever ink outputs stat dump lines, replacing raw text with styled block
 function renderInlineStats(container) {
     if (!getStory()) return;
     const vars = getStory().variablesState;
 
     let html = '';
-    let hasAnyStats = false;
+    let hasAnyChanges = false;
 
     statCategories.forEach(cat => {
         let catHtml = '';
@@ -167,16 +167,15 @@ function renderInlineStats(container) {
                 const prev = prevStatSnapshot[stat.id] || 0;
                 const delta = n - prev;
 
-                hasAnyStats = true;
+                // Only include stats that changed
+                if (delta === 0) return;
+
+                hasAnyChanges = true;
                 const tipAttr = stat.tip ? ` title="${stat.tip}"` : '';
 
-                // Show delta badge only if changed
-                let deltaHtml = '';
-                if (delta !== 0) {
-                    const cls = delta > 0 ? 'positive' : 'negative';
-                    const sign = delta > 0 ? '+' : '';
-                    deltaHtml = `<span class="stat-inline-delta ${cls}">${sign}${delta}</span>`;
-                }
+                const cls = delta > 0 ? 'positive' : 'negative';
+                const sign = delta > 0 ? '+' : '';
+                const deltaHtml = `<span class="stat-inline-delta ${cls}">${sign}${delta}</span>`;
 
                 groupItems.push(`<span class="stat-inline ${grp.css}"${tipAttr}><span class="stat-inline-icon">${stat.icon}</span><span class="stat-inline-name">${stat.name}</span><span class="stat-inline-val">${n}</span>${deltaHtml}</span>`);
             });
@@ -195,7 +194,7 @@ function renderInlineStats(container) {
     });
 
     // Only render if we have stats to show
-    if (hasAnyStats) {
+    if (hasAnyChanges) {
         const block = document.createElement('div');
         block.className = 'stats-block';
         block.innerHTML = '<div class="stats-block-title">Status Report</div>' + html;
