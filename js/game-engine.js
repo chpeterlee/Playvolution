@@ -154,9 +154,8 @@ function renderStory() {
     section.className = 'story-section';
 
     // Detect stat-dump lines from ink and suppress them in favor of styled block
-    // Matches: -- Read:6 Weave:2 Play:4 ... --  or  -- Quantum - Tele:2 Psion:1 ... --
-    const statLinePattern = /^--\s*\w[\w\s-]*:\d+.*--$/;
-    const endOutputPattern = /^--\s*End output\s*--$/i;
+    const statLinePattern = /^\w[\w\s-]*:\d+.*--\s*$/;
+    const endOutputPattern = /^End output\s*--\s*$/i;
     const focusPromptPattern = /^Choose your focus/i;
     let hasStatDump = false;
 
